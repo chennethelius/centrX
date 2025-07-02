@@ -122,7 +122,6 @@ class _LoginPageState extends State<LoginPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       // Handle login
-                      print('Login pressed');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6366F1),
@@ -172,14 +171,9 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () async {
 
                           // 1️⃣ Trigger the Google sign-in flow:
-                          print('lololol');
                           final userCred = await AuthService().authenticateWithGoogle();
-                          print('poooppo');
-                          
-
                           // 2️⃣ If successful, navigate to home; otherwise show an error:
                           if (userCred != null) {
-                            print('hellooooo new user');
                             Navigator.pushReplacement(context,
                               MaterialPageRoute(builder: (_) => const HomePage()),
                             );
