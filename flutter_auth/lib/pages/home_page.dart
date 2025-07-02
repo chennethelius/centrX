@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_auth/services/auth_service.dart';
+
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -6,6 +9,11 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Grab the current Firebase user
+    final User? user = AuthService().currentUser;
+    // Fallback if name is null or empty
+    final String userFirstName = user?.displayName?.split(' ').first ?? 'there';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -41,7 +49,7 @@ class HomePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Welcome back!',
+                      'Welcome back, $userFirstName!',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,

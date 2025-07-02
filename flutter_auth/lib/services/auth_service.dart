@@ -1,80 +1,47 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-/// Central service handling Firebase and Google Sign-In authentication logic
+/// Simplified AuthService that works on mobile and web
 class AuthService {
-  // FirebaseAuth instance for Firebase operations
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-
-  // GoogleSignIn instance for Google authentication
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-  /// Initializes Google Sign-In for silent authentication if possible.
-  /// Call once in initState(), e.g., in LoginPage.initState().
-  Future<void> initializeGoogleSignIn({
-    String? clientId,
-    String? serverClientId,
-    void Function(GoogleSignInAuthenticationEvent)? onAuthEvent,
-    void Function(Object)? onAuthError,
-  }) async {
-    // Start initialization without awaiting to avoid blocking UI
-    _googleSignIn
-        .initialize(clientId: clientId, serverClientId: serverClientId)
-        .then((_) {
-      if (onAuthEvent != null) {
-        // Listen for sign-in and sign-out events
-        _googleSignIn.authenticationEvents
-            .listen(onAuthEvent)
-            .onError(onAuthError ?? (e) {});
-      }
-      // Attempt silent sign-in if credentials are cached (no UI)
-      _googleSignIn.attemptLightweightAuthentication();
-    });
-  }
-
-  /// Starts the interactive Google Sign-In flow.
-  /// Must be called from a user gesture (e.g., button press).
-  Future<UserCredential?> authenticateWithGoogle() async {
+  /// Triggers Google Sign-In flow
+  /// Returns a Firebase [User] on success or null on cancel/error
+  Future<User?> authenticateWithGoogle() async {
     try {
-      // Check if interactive sign-in is supported on this platform
-      if (!_googleSignIn.supportsAuthenticate()) {
-        throw Exception('Interactive Google Sign-In not supported.');
+      // On web, use GoogleSignIn popup; on mobile, use standard flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+      if (googleUser == null) {
+        // User cancelled sign-in
+        return null;
       }
 
-      // Launch the full Google Sign-In UI
-      await _googleSignIn.authenticate();
+      // Obtain the auth details (tokens)
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      // Wait for the next "signedIn" event
-      final event = await _googleSignIn.authenticationEvents.firstWhere(
-        (e) => e is GoogleSignInAuthenticationEventSignIn,
-      ) as GoogleSignInAuthenticationEventSignIn;
-
-      // Get the signed-in Google account
-      final account = event.user;
-
-      // Retrieve OAuth tokens (access and ID) synchronously
-      final googleAuth = account.authentication;
-
-      // Create a new Firebase credential using Google tokens
+      // Create a new credential
       final credential = GoogleAuthProvider.credential(
         //accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the credential
-      return await _firebaseAuth.signInWithCredential(credential);
+      // Sign in to Firebase with the Google credential
+      final userCredential = await _auth.signInWithCredential(credential);
+      return userCredential.user;
     } catch (e) {
       print('❌ Google sign-in error: $e');
       return null;
     }
   }
 
-  /// Signs out from both Google and Firebase.
+  /// Signs out from both Google and Firebase
   Future<void> signOut() async {
     await _googleSignIn.signOut();
-    await _firebaseAuth.signOut();
+    await _auth.signOut();
   }
 
-  /// Returns the currently signed-in Firebase user, if any.
-  User? get currentUser => _firebaseAuth.currentUser;
+  /// Current Firebase user, if signed in
+  User? get currentUser => _auth.currentUser;
 }
