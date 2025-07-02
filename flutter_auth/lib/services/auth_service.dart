@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -31,7 +30,7 @@ class AuthService {
       final userCredential = await _auth.signInWithCredential(credential);
       return userCredential.user;
     } catch (e) {
-      print('❌ Google sign-in error: $e');
+      //print('❌ Google sign-in error: $e');
       return null;
     }
   }
