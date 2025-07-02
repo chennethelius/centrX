@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_auth/services/auth_service.dart';
+import 'package:flutter_auth/pages/home_page.dart';
 
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -166,7 +169,26 @@ class _LoginPageState extends State<LoginPage> {
                       child: _buildSocialButton(
                         icon: Icons.g_mobiledata,
                         label: 'Google',
-                        onPressed: () {},
+                        onPressed: () async {
+
+                          // 1️⃣ Trigger the Google sign-in flow:
+                          print('lololol');
+                          final userCred = await AuthService().authenticateWithGoogle();
+                          print('poooppo');
+                          
+
+                          // 2️⃣ If successful, navigate to home; otherwise show an error:
+                          if (userCred != null) {
+                            print('hellooooo new user');
+                            Navigator.pushReplacement(context,
+                              MaterialPageRoute(builder: (_) => const HomePage()),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                            );
+                          }
+                        },
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -339,3 +361,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+
