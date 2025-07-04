@@ -36,9 +36,13 @@ class _AppShellState extends State<AppShell> {
       body: _tabs[_currentIndex],
 
       // your reusable Crystal nav bar
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabChanged,
+      bottomNavigationBar: Transform.translate(
+        // pushes nav bar down 
+        offset: Offset(0, 35),
+        child: BottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: _onTabChanged,
+        ),
       ),
     );
   }
