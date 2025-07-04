@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/services/auth_service.dart';
 import 'package:flutter_auth/pages/home_page.dart';
-
+import 'package:flutter_auth/components/app_shell.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -169,13 +169,14 @@ class LoginPageState extends State<LoginPage> {
                         icon: Icons.g_mobiledata,
                         label: 'Google',
                         onPressed: () async {
-
-                          // 1️⃣ Trigger the Google sign-in flow:
+                          // trigger the Google sign-in flow:
                           final userCred = await AuthService().authenticateWithGoogle();
-                          // 2️⃣ If successful, navigate to home; otherwise show an error:
+                          // if successful, navigate to home; otherwise show an error:
                           if (userCred != null) {
-                            Navigator.pushReplacement(context,
-                              MaterialPageRoute(builder: (_) => const HomePage()),
+                            // after successful login
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => const AppShell()),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
