@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
+import 'components/app_shell.dart';
 
-
+import 'package:flutter_auth/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -18,10 +19,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+     final isLoggedIn = AuthService().currentUser != null;
+
     return MaterialApp(
-      title: 'Google Sign-in',
-      home: LoginPage(),
       debugShowCheckedModeBanner: false,
+      title: 'centrX',
+      // if user not logged in, direct to login page, but if user is logged in, go to appshell
+      home: isLoggedIn ? const LoginPage() : const AppShell(),
+      
     );
   }
 }
