@@ -22,9 +22,6 @@ class _EventsPageState extends State<EventsPage>
   late final AnimationController _scrollController;
   late final Animation<double> _scrollAnimation;
 
-  // Scroll tracking
-  double _scrollOffset = 0.0;
-  bool _isScrolling = false;
   late PageController _pageController;
 
   // Sample events data
@@ -147,7 +144,7 @@ class _EventsPageState extends State<EventsPage>
                 Icon(
                   IconlyBold.play,
                   size: 80,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -155,7 +152,7 @@ class _EventsPageState extends State<EventsPage>
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -163,7 +160,7 @@ class _EventsPageState extends State<EventsPage>
                   'Tap to play',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -183,7 +180,7 @@ class _EventsPageState extends State<EventsPage>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.6),
+                  Colors.black.withValues(alpha: 0.6),
                   Colors.transparent,
                 ],
               ),
@@ -198,7 +195,7 @@ class _EventsPageState extends State<EventsPage>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -225,7 +222,7 @@ class _EventsPageState extends State<EventsPage>
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.black.withOpacity(0.8),
+                  Colors.black.withValues(alpha: 0.8),
                 ],
               ),
             ),
@@ -330,7 +327,7 @@ class _EventsPageState extends State<EventsPage>
                 event['description'],
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   height: 1.4,
                 ),
                 maxLines: 3,
@@ -342,14 +339,14 @@ class _EventsPageState extends State<EventsPage>
                   Icon(
                     IconlyLight.calendar,
                     size: 16,
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     event['date'],
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -367,7 +364,7 @@ class _EventsPageState extends State<EventsPage>
             width: 3,
             height: MediaQuery.of(context).size.height * 0.4,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
             child: Stack(
@@ -379,7 +376,7 @@ class _EventsPageState extends State<EventsPage>
                     width: 3,
                     height: MediaQuery.of(context).size.height * 0.4 / events.length,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -413,10 +410,10 @@ class _EventsPageState extends State<EventsPage>
                   width: 48,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -467,13 +464,13 @@ class _EventsPageState extends State<EventsPage>
                   height: 80,
                   decoration: BoxDecoration(
                     color: isRsvped
-                        ? Colors.green.withOpacity(0.3)
-                        : Colors.purple.withOpacity(0.3),
+                        ? Colors.green.withValues(alpha: 0.3)
+                        : Colors.purple.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isRsvped
-                          ? Colors.green.withOpacity(0.5)
-                          : Colors.purple.withOpacity(0.5),
+                          ? Colors.green.withValues(alpha: 0.5)
+                          : Colors.purple.withValues(alpha: 0.5),
                       width: 1.5,
                     ),
                   ),
@@ -530,10 +527,10 @@ class _EventsPageState extends State<EventsPage>
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
