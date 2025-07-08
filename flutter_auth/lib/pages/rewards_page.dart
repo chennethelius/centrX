@@ -13,7 +13,7 @@ class _RewardsPageState extends State<RewardsPage>
   late TabController _tabController;
   List<String> favorites = ['prof-smith', 'prof-garcia'];
   List<Professor> cart = [];
-  int studentPoints = 1250;
+  int studentPoints = 100;
 
   @override
   void initState() {
@@ -102,10 +102,10 @@ class _RewardsPageState extends State<RewardsPage>
     switch (_tabController.index) {
       case 0: // Featured
         return professors.where((prof) => prof.featured).toList();
-      case 1: // Favorites
-        return professors.where((prof) => favorites.contains(prof.id)).toList();
-      case 2: // Menu
+      case 1: // Menu
         return professors;
+      case 2: // Favorites
+        return professors.where((prof) => favorites.contains(prof.id)).toList();
       default:
         return professors;
     }
