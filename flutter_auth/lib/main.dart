@@ -19,9 +19,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('hello');
      final isLoggedIn = AuthService().currentUser != null;
-     print('pass');
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
