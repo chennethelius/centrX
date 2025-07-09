@@ -49,7 +49,6 @@ class _LogoutButtonState extends State<LogoutButton>
     try {
       await AuthService().signOut();
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
-      print('signed out');
     } catch (e) {
       debugPrint('Sign out error: $e');
     } finally {
