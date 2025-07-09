@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_auth/services/auth_service.dart';
 
+import 'package:flutter_auth/pages/login_page.dart';
+
 class LogoutButton extends StatefulWidget {
   const LogoutButton({super.key});
 
@@ -46,6 +48,7 @@ class _LogoutButtonState extends State<LogoutButton>
     
     try {
       await AuthService().signOut();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
       print('signed out');
     } catch (e) {
       debugPrint('Sign out error: $e');
