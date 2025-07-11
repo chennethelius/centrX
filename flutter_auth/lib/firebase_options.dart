@@ -64,6 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '814750200624',
     projectId: 'bubbl-klz46e',
     storageBucket: 'bubbl-klz46e.firebasestorage.app',
+    androidClientId: '814750200624-oorb4c0r22t2d1u2shpmbc8mcm17rjk1.apps.googleusercontent.com',
     iosClientId: '814750200624-qlua36dj4ufe6e1gsl4lh602cfdum6jh.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterAuth',
   );
@@ -74,6 +75,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '814750200624',
     projectId: 'bubbl-klz46e',
     storageBucket: 'bubbl-klz46e.firebasestorage.app',
+    androidClientId: '814750200624-oorb4c0r22t2d1u2shpmbc8mcm17rjk1.apps.googleusercontent.com',
     iosClientId: '814750200624-qlua36dj4ufe6e1gsl4lh602cfdum6jh.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterAuth',
   );
