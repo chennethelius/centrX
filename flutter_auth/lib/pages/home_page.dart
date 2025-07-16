@@ -15,6 +15,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final User? user = FirebaseAuth.instance.currentUser;
   late final String userFirstName;
+
   
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
     userFirstName = user?.displayName?.split(' ').first ?? 'there';
     _selectedDay = _focusedDay;
     
