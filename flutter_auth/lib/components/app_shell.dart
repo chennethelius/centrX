@@ -4,6 +4,8 @@ import 'package:flutter_auth/pages/home_page.dart';
 import 'package:flutter_auth/pages/events_page.dart';
 import 'package:flutter_auth/pages/rewards_page.dart';
 
+
+
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
