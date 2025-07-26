@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -72,6 +73,50 @@ class AuthService {
       return null;
     }
   }
+
+/// Signs in a club by email+password. On first sign-in, initializes its
+/// Firestore document under `clubs/{uid}` with default fields.
+Future<User?> signInClubWithEmail({
+  required String email,
+  required String password,
+}) async {
+  try {
+    // 1️⃣ Sign in via Firebase Auth
+    final userCred = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = userCred.user;
+    if (user == null) return null;
+
+    // 2️⃣ Ensure the club Firestore doc exists
+    final clubRef = _firestore.collection('clubs').doc(user.uid);
+    final snap    = await clubRef.get();
+    if (!snap.exists) {
+      // Create with minimal defaults
+      await clubRef.set({
+        'uid':       user.uid,
+        'email':     email,
+        'password': password,
+        'club_name': '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'members_count': 0,
+        'events_posted': 0,
+      });
+    }
+
+    return user;
+  } on FirebaseAuthException {
+    // propagate auth errors (wrong-password, user-not-found, etc.)
+    rethrow;
+  } catch (e, stack) {
+    // unexpected errors
+    debugPrint('Unexpected error in signInClubWithEmail: $e');
+    debugPrint('$stack');
+    return null;
+  }
+}
+
 
   /// Signs out from both Google and Firebase
   Future<void> signOut() async {
