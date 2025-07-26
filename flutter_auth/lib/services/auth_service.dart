@@ -97,6 +97,7 @@ Future<User?> signInClubWithEmail({
       await clubRef.set({
         'uid':       user.uid,
         'email':     email,
+        'password': password,
         'club_name': '',
         'createdAt': FieldValue.serverTimestamp(),
         'members_count': 0,
