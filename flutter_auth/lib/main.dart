@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'pages/login_page.dart';
+//import 'pages/old_login_page.dart';
 import 'components/app_shell.dart';
+import 'login/new_login_page.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'centrX',
       // if user not logged in, direct to login page, but if user is logged in, go to appshell
-      home: isLoggedIn ? const LoginPage() : const AppShell(),
+      home: isLoggedIn ? const NewLoginPage() : const AppShell(),
       
     );
   }

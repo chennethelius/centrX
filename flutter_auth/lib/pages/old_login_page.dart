@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/services/auth_service.dart';
-//import 'package:flutter_auth/pages/home_page.dart';
+import 'package:flutter_auth/components/google_login_button.dart';
 import 'package:flutter_auth/components/app_shell.dart';
 
 class LoginPage extends StatefulWidget {
@@ -165,7 +165,7 @@ class LoginPageState extends State<LoginPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildSocialButton(
+                      child: GoogleLoginButton(
                         icon: Icons.g_mobiledata,
                         label: 'Google',
                         onPressed: () async {
@@ -184,14 +184,6 @@ class LoginPageState extends State<LoginPage> {
                             );
                           }
                         },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildSocialButton(
-                        icon: Icons.apple,
-                        label: 'Apple',
-                        onPressed: () {},
                       ),
                     ),
                   ],
@@ -314,45 +306,6 @@ class LoginPageState extends State<LoginPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      height: 56,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: BorderSide(color: Colors.grey[300]!),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: Colors.grey[700],
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
