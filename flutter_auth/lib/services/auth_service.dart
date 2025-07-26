@@ -36,7 +36,14 @@ class AuthService {
       final user = userCredential.user;
       if (user == null) return null;
 
-    // add user to firestore user collection
+      // check if user already exists in firestore
+      final usersRef = _firestore.collection('users');
+      final docRef   = usersRef.doc(user.uid);
+      final snapshot = await docRef.get();
+
+      // only writes in data if the user does not exist
+      if (!snapshot.exists) {    
+      // add user to firestore user collection
       final userDoc = _firestore.collection('users').doc(user.uid);
 
       // parses users name into first and last
@@ -47,13 +54,16 @@ class AuthService {
 
     // adds user to firestore collection users
       await userDoc.set({
+        'uid':           user.uid,
         'firstName':     firstName,
         'lastName':      lastName,
         'email':         user.email       ?? '',
         'role':          'student',                  
-        'pointsBalance': 0,                          
+        'pointsBalance': 0,
+        'events_registered': 0,
+        'clubs_joined': 0,
         'createdAt':     FieldValue.serverTimestamp(),
-      });
+      });}
 
 
       return userCredential.user;
