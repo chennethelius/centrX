@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app needs local-network access to enable Flutter's debugging tools.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need to access your photo library to pick images and videos</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need to use your camera to take pictures</string>
 	<key>GIDClientID</key>
 	<!-- TODO Replace this value: -->
 	<!-- Copied from GoogleService-Info.plist key CLIENT_ID -->
