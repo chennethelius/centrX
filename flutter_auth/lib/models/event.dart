@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Event {
   final String? eventId;
   final String ownerId;
-  final String username;
+  final String clubname;
   final String title;
   final String description;
   final String location;
@@ -17,7 +17,7 @@ class Event {
   Event({
     required this.eventId,
     required this.ownerId,
-    required this.username,
+    required this.clubname,
     required this.title,
     required this.description,
     required this.location,
@@ -32,7 +32,7 @@ class Event {
     return Event(
       eventId:        id,
       ownerId:       json['ownerId']       as String?        ?? '',
-      username:      json['username']      as String?        ?? '',
+      clubname:      json['clubname']      as String?        ?? '',
       title:         json['title']         as String?        ?? '',
       description:   json['description']   as String?        ?? '',
       location:      json['location']      as String?        ?? '',
@@ -47,7 +47,7 @@ class Event {
   Map<String, dynamic> toJson() {
     return {
       'ownerId':        ownerId,
-      'username':       username,
+      'clubname':       clubname,
       'title':          title,
       'description':    description,
       'location':       location,

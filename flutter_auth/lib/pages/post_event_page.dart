@@ -64,7 +64,7 @@ class _PostEventPageState extends State<PostEventPage> {
       final controller = VideoPlayerController.file(File(video.path));
       await controller.initialize();
       controller.setLooping(true);
-      controller.play();
+      //controller.play();
       setState(() {
         _selectedMedia = File(video.path);
         _mediaType = 'video';
@@ -198,11 +198,20 @@ class _PostEventPageState extends State<PostEventPage> {
     final snapshot = await uploadTask;
     final downloadUrl = await snapshot.ref.getDownloadURL();
 
+      // 3.5)
+    final clubSnap = await FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(clubId)
+        .get();
+    final clubData = clubSnap.data()!;
+    final clubName = (clubData['club_name']) as String? 
+                    ?? 'Unknown Club';
+                    
     // 4) Construct your Event model
     final event = Event(
       eventId:        eventId,
       ownerId:       user.uid,
-      username:      user.displayName ?? 'Unknown',
+      clubname:      clubName,
       title:         _titleController.text.trim(),
       description:   _descriptionController.text.trim(),
       location:      _locationController.text.trim(),
