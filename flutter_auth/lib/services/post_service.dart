@@ -39,7 +39,7 @@ class PostService {
         'postId':    event.eventId,
         'clubId':    clubId,
         'ownerId':   event.ownerId,
-        'username':  event.username,
+        'clubname':  event.clubname,
         'eventDate': Timestamp.fromDate(event.eventDate),
         'mediaUrl':  mediaUrl,
         'createdAt': Timestamp.fromDate(event.createdAt),
