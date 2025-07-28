@@ -182,9 +182,8 @@ class _PostEventPageState extends State<PostEventPage> {
   try {
     final user = FirebaseAuth.instance.currentUser!;
     final clubId = user.uid; 
-    // 2) Generate a new eventId
 
-    print("still ok1");
+    // 2) Generate a new eventId
     final eventRef = FirebaseFirestore.instance
         .collection('clubs')
         .doc(clubId)
@@ -192,16 +191,12 @@ class _PostEventPageState extends State<PostEventPage> {
         .doc();
     final eventId = eventRef.id;
 
-    print('Uploading to: clubs/$clubId/events/$eventId/media/$eventId');
-    print('Signed in as UID: ${FirebaseAuth.instance.currentUser?.uid}');
-
     // 3) Upload the media file
     final storageRef = FirebaseStorage.instance
         .ref('clubs/$clubId/events/$eventId/media/$eventId');
     final uploadTask = storageRef.putFile(_selectedMedia!);
     final snapshot = await uploadTask;
     final downloadUrl = await snapshot.ref.getDownloadURL();
-    print("still ok2");
 
     // 4) Construct your Event model
     final event = Event(
