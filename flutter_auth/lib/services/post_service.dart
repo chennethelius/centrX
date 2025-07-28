@@ -43,6 +43,9 @@ class PostService {
         'eventDate': Timestamp.fromDate(event.eventDate),
         'mediaUrl':  mediaUrl,
         'createdAt': Timestamp.fromDate(event.createdAt),
+        'description': event.description,
+        'location': event.location,
+        'title': event.title,
       });
     }
 
