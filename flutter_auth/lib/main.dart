@@ -24,7 +24,6 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'centrX',
       // if user not logged in, direct to login page, but if user is logged in, go to appshell
       home: isLoggedIn ? const NewLoginPage() : const AppShell(),
       

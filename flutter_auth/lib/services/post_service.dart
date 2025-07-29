@@ -34,19 +34,11 @@ class PostService {
     for (final mediaUrl in event.mediaUrls) {
       final mediaId = _uuid.v4();
       final mediaRef = _firestore.collection('media').doc(mediaId);
-      batch.set(mediaRef, {
-        'mediaId':   mediaId,
-        'postId':    event.eventId,
-        'clubId':    clubId,
-        'ownerId':   event.ownerId,
-        'clubname':  event.clubname,
-        'eventDate': Timestamp.fromDate(event.eventDate),
-        'mediaUrl':  mediaUrl,
-        'createdAt': Timestamp.fromDate(event.createdAt),
-        'description': event.description,
-        'location': event.location,
-        'title': event.title,
-      });
+      final map = event.toJson();
+      map['mediaUrl'] = mediaUrl;
+      map['mediaId'] = mediaId;
+      batch.set(mediaRef, map);
+
     }
 
     // Commit both writes together

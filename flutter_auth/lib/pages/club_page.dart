@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_auth/pages/post_event_page.dart';
 import '../models/event.dart';
+import '../components/logout_button.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ClubPage extends StatefulWidget {
   const ClubPage({super.key});
@@ -11,8 +15,7 @@ class ClubPage extends StatefulWidget {
 }
 
 class _ClubPageState extends State<ClubPage> {
-  // Mock data
-  final String clubName = "Computer Science Club";
+  final String clubName = FirebaseAuth.instance.currentUser?.displayName ?? '';
   final int memberCount = 47;
 
   @override
@@ -71,6 +74,7 @@ class _ClubPageState extends State<ClubPage> {
                     // Events Section
                     //_buildEventsSection(),
                     const SizedBox(height: 100), // Space for FAB
+                    LogoutButton(),
                   ]),
                 ),
               ),
@@ -129,7 +133,7 @@ class _ClubPageState extends State<ClubPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          clubName,
+                          'Welcome, $clubName',
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
