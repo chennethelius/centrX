@@ -209,6 +209,10 @@ class _PostEventPageState extends State<PostEventPage> {
                     
     // 4) Construct your Event model
     final event = Event(
+      likeCount: 0,
+      commentCount: 0,
+      isRsvped: false,
+      mediaId:    '',
       eventId:        eventId,
       ownerId:       user.uid,
       clubname:      clubName,

@@ -1,5 +1,3 @@
-// lib/pages/home_page.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,13 +28,23 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    userFirstName = user?.displayName?.split(' ').first ?? 'there';
+    final fullName = user?.displayName ?? '';
+
+    userFirstName = fullName.isNotEmpty
+      ? fullName.split(' ').first
+      : 'there';
 
   }
 
   @override
   Widget build(BuildContext context) {
-    final uid = user!.uid;
+    if (user == null) {
+      return const Scaffold(
+      body: Center(child: Text('Not signed in')),
+    );
+  }
+
+    final uid = user?.uid;
     final userStream = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
