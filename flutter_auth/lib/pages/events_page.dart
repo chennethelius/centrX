@@ -126,7 +126,7 @@ class _EventsPageState extends State<EventsPage> {
           final data = _mediaDocs[index].data() as Map<String, dynamic>;
 
           // Extract the overlay fields from your media doc:
-          final clubName   = data['clubname']    as String? ?? 'Unknown Club';
+          final title   = data['title']    as String? ?? 'Unknown Club';
           final desc       = data['description'] as String? ?? '';
           final location  = data['location']     as String? ?? '';
           final likeCount = data['likeCount']    as int? ?? 0;
@@ -167,7 +167,7 @@ class _EventsPageState extends State<EventsPage> {
                   eventId: eventId,
                   clubId: clubId,
                   mediaId: mediaId,
-                  clubName:    clubName,
+                  title:    title,
                   description: desc,
                   location:    location,
                   likeCount: likeCount,

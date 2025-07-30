@@ -1,9 +1,9 @@
-// lib/widgets/like_button.dart
-
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+//TODO: like animation, double-tap screen to like
 
 class LikeButton extends StatelessWidget {
   final String mediaId;
