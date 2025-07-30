@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/components/like_button.dart';
+import 'package:flutter_auth/components/rsvp_button.dart';
 import 'package:iconly/iconly.dart';
 
 class VideoOverlay extends StatelessWidget {
   final String clubName;
+  final String clubId;
+  final String eventId;
   final String description;
   final String location;
   final int likeCount;
   final int commentCount;
-  final bool isRsvped;
   final VoidCallback onCommentTap;
-  final VoidCallback onRsvpTap;
   final String mediaId;
 
   const VideoOverlay({
     Key? key,
     required this.mediaId,
+    required this.clubId,
+    required this.eventId,
     required this.clubName,
     required this.description,
     required this.location,
     required this.likeCount,
     required this.commentCount,
-    required this.isRsvped,
     required this.onCommentTap,
-    required this.onRsvpTap,
   }) : super(key: key);
 
   @override
@@ -96,22 +97,7 @@ class VideoOverlay extends StatelessWidget {
                 onTap: onCommentTap,
               ),
               const SizedBox(height: 90),
-              _OverlayButton(
-                icon: isRsvped ? IconlyBold.tick_square : IconlyBold.calendar,
-                count: 0,
-                color: Colors.red,
-                active: isRsvped,
-                onTap: onRsvpTap,
-              ),
-              Text(
-                "RSVP",
-                style: const TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w700,
-                color: Color.fromARGB(255, 255, 255, 255),
-                fontSize: 13,
-              ),
-              ),
+              RsvpButton(clubId: clubId, eventId: eventId)
             ],
           ),
         ),

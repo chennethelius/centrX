@@ -66,7 +66,10 @@ class _HomePageState extends State<HomePage> {
 
           final data = snap.data!.data()! as Map<String, dynamic>;
           final pointsBalance    = data['pointsBalance']    as int? ?? 0;
-          final eventsRegistered  = data['events_registered'] as int? ?? 0;
+          final registeredEvents = List<String>.from(
+            data['events_registered'] as List<dynamic>? ?? <dynamic>[],
+          );
+          final eventCount = registeredEvents.length;
           final clubsJoined       = data['clubs_joined']     as int? ?? 0;
 
           return Container(
@@ -93,7 +96,7 @@ class _HomePageState extends State<HomePage> {
                     _buildPointsCard(pointsBalance),
 
                     const SizedBox(height: 24),
-                    _buildBentoGrid(eventsRegistered, clubsJoined),
+                    _buildBentoGrid(eventCount, clubsJoined),
 
                     const SizedBox(height: 24),
                     CalendarWidget(rsvpDays: _rsvpDays),
