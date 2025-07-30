@@ -4,7 +4,7 @@ import 'package:flutter_auth/components/rsvp_button.dart';
 import 'package:iconly/iconly.dart';
 
 class VideoOverlay extends StatelessWidget {
-  final String clubName;
+  final String title;
   final String clubId;
   final String eventId;
   final String description;
@@ -19,7 +19,7 @@ class VideoOverlay extends StatelessWidget {
     required this.mediaId,
     required this.clubId,
     required this.eventId,
-    required this.clubName,
+    required this.title,
     required this.description,
     required this.location,
     required this.likeCount,
@@ -47,7 +47,7 @@ class VideoOverlay extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  clubName,
+                  title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

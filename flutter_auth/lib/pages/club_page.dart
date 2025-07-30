@@ -43,7 +43,7 @@ class _ClubPageState extends State<ClubPage> {
                 floating: true,
                 automaticallyImplyLeading: false,
                 title: const Text(
-                  'Dashboard',
+                  'Club Dashboard',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
