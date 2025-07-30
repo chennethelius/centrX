@@ -1,8 +1,12 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Event {
   final int likeCount;
   final int commentCount;
+  final int durationMinutes;
+  final bool isQrEnabled;
   final bool isRsvped;
   final String eventId;
   final String ownerId;
@@ -18,6 +22,8 @@ class Event {
   final List<String> rsvpList;
 
   Event({
+    required this.isQrEnabled,
+    required this.durationMinutes,
     required this.mediaId,
     required this.likeCount,
     required this.commentCount,
@@ -50,6 +56,8 @@ class Event {
       location:      json['location']      as String?        ?? '',
       createdAt:     (json['createdAt']    as Timestamp).toDate(),
       eventDate:     (json['eventDate']    as Timestamp).toDate(),
+      durationMinutes: json['durationMinutes'] as int?            ?? 0,
+      isQrEnabled:     json['isQrEnabled']     as bool?           ?? false,
       mediaUrls:     List<String>.from(json['mediaUrls']    as List<dynamic>? ?? []),
       attendanceList: List<String>.from(json['attendanceList'] as List<dynamic>? ?? []),
       rsvpList: List<String>.from(json['rsvpList'] as List<dynamic>? ?? []),
@@ -71,6 +79,8 @@ class Event {
       'location':       location,
       'createdAt':      Timestamp.fromDate(createdAt),
       'eventDate':      Timestamp.fromDate(eventDate),
+      'durationMinutes': durationMinutes,
+      'isQrEnabled':     isQrEnabled,
       'mediaUrls':      mediaUrls,
       'attendanceList': attendanceList,
       'rsvpList': rsvpList,

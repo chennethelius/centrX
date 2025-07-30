@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'dart:ui';
 
+import 'package:flutter_auth/components/bento_grid.dart';
 import 'package:flutter_auth/components/logout_button.dart';
 import 'package:flutter_auth/components/calendar_widget.dart';
 
@@ -96,8 +97,27 @@ class _HomePageState extends State<HomePage> {
                     _buildPointsCard(pointsBalance),
 
                     const SizedBox(height: 24),
-                    _buildBentoGrid(eventCount, clubsJoined),
-
+                    BentoGrid(
+                      crossAxisCount: 2,               // optional (default 2)
+                      childAspectRatio: 1.1,           // optional
+                      spacing: 16.0,                   // optional
+                      items: [
+                        BentoItem(
+                          title: 'Events',
+                          value: eventCount.toString(),
+                          subtitle: 'Registered',
+                          icon: IconlyBold.calendar,
+                          color: Colors.red,
+                        ),
+                        BentoItem(
+                          title: 'Clubs',
+                          value: clubsJoined.toString(),
+                          subtitle: 'Joined',
+                          icon: IconlyBold.user_3,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 24),
                     CalendarWidget(rsvpDays: _rsvpDays),
                     const SizedBox(height: 24),
@@ -301,114 +321,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBentoGrid(int eventsRegistered, int clubsJoined) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.1,
-      children: [
-        _buildBentoCard(
-          title: 'Events',
-          value: '$eventsRegistered',
-          subtitle: 'Registered',
-          icon: IconlyBold.calendar,
-          color: const Color(0xFF06B6D4),
-        ),
-        _buildBentoCard(
-          title: 'Clubs',
-          value: '$clubsJoined',
-          subtitle: 'Joined',
-          icon: IconlyBold.user_3,
-          color: const Color(0xFF10B981),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBentoCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.2),
-            Colors.white.withValues(alpha: 0.05),
-          ],
-        ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                const Spacer(),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

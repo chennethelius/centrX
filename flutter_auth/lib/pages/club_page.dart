@@ -3,9 +3,10 @@ import 'dart:ui';
 import 'package:flutter_auth/pages/post_event_page.dart';
 import '../models/event.dart';
 import '../components/logout_button.dart';
-
+import 'package:iconly/iconly.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_auth/components/bento_grid.dart';
 
 class ClubPage extends StatefulWidget {
   const ClubPage({super.key});
@@ -70,7 +71,27 @@ class _ClubPageState extends State<ClubPage> {
                     // Club Header
                     _buildClubHeader(),
                     const SizedBox(height: 24),
-                    
+                    BentoGrid(
+                      crossAxisCount: 2,               // optional (default 2)
+                      childAspectRatio: 1.1,           // optional
+                      spacing: 16.0,                   // optional
+                      items: [
+                        BentoItem(
+                          title: 'Likes',
+                          value: '0',
+                          subtitle: '',
+                          icon: IconlyBold.heart,
+                          color: Colors.red,
+                        ),
+                        BentoItem(
+                          title: 'Activity',
+                          value: '0',
+                          subtitle: '',
+                          icon: IconlyBold.activity,
+                          color: Colors.yellow,
+                        ),
+                      ],
+                    ),
                     // Events Section
                     //_buildEventsSection(),
                     const SizedBox(height: 100), // Space for FAB
