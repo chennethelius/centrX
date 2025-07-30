@@ -15,6 +15,7 @@ class Event {
   final DateTime eventDate;
   final List<String> mediaUrls;
   final List<String> attendanceList;
+  final List<String> rsvpList;
 
   Event({
     required this.mediaId,
@@ -31,6 +32,7 @@ class Event {
     required this.eventDate,
     required this.mediaUrls,
     required this.attendanceList,
+    required this.rsvpList,
   });
 
   /// Deserialize from Firestore document
@@ -50,6 +52,7 @@ class Event {
       eventDate:     (json['eventDate']    as Timestamp).toDate(),
       mediaUrls:     List<String>.from(json['mediaUrls']    as List<dynamic>? ?? []),
       attendanceList: List<String>.from(json['attendanceList'] as List<dynamic>? ?? []),
+      rsvpList: List<String>.from(json['rsvpList'] as List<dynamic>? ?? []),
     );
   }
 
@@ -70,6 +73,7 @@ class Event {
       'eventDate':      Timestamp.fromDate(eventDate),
       'mediaUrls':      mediaUrls,
       'attendanceList': attendanceList,
+      'rsvpList': rsvpList,
     };
   }
 }

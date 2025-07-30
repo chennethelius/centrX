@@ -61,7 +61,7 @@ class AuthService {
         'email':         user.email       ?? '',
         'role':          'student',                  
         'pointsBalance': 0,
-        'events_registered': 0,
+        'events_registered': [],
         'clubs_joined': 0,
         'createdAt':     FieldValue.serverTimestamp(),
       });}

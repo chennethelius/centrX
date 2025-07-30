@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       // if user not logged in, direct to login page, but if user is logged in, go to appshell
-      home: isLoggedIn ? const NewLoginPage() : const AppShell(),
+      home: isLoggedIn ? const AppShell() : const NewLoginPage(),
       
     );
   }

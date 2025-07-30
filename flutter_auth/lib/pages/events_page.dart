@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../components/video_overlay.dart';
 import '../services/social_button_services.dart';
-import 'package:flutter/foundation.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
@@ -132,10 +132,13 @@ class _EventsPageState extends State<EventsPage> {
           final likeCount = data['likeCount']    as int? ?? 0;
           final commentCount = data['commentCount']    as int? ?? 0;
           final mediaId = data['mediaId'] as String? ?? '';
+          final clubId = data['ownerId'] as String? ?? '';
+          final eventId = data['eventId'] as String? ?? '';
 
+          /*
           final attendance = List<String>.from(data['attendanceList'] as List<dynamic>? ?? []);
           final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-          final isRsvped = currentUserId != null && attendance.contains(currentUserId);
+          final isRsvped = currentUserId != null && attendance.contains(currentUserId);*/
           return GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {
@@ -161,15 +164,15 @@ class _EventsPageState extends State<EventsPage> {
             
                 // 2) Simple overlay at bottom
                 VideoOverlay(
+                  eventId: eventId,
+                  clubId: clubId,
                   mediaId: mediaId,
                   clubName:    clubName,
                   description: desc,
                   location:    location,
                   likeCount: likeCount,
                   commentCount: commentCount,
-                  isRsvped:    isRsvped,
                   onCommentTap:() => (SocialButtonServices.showComments(context, mediaId)),
-                  onRsvpTap:   () => (SocialButtonServices.toggleRsvp(mediaId)),
                 ),
               ],
             ),

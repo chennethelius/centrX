@@ -229,6 +229,7 @@ class _PostEventPageState extends State<PostEventPage> {
                      ),
       mediaUrls:     [downloadUrl],
       attendanceList: [],
+      rsvpList: [],
     );
 
     // 5) Write both event + top‑level media docs in one batch
