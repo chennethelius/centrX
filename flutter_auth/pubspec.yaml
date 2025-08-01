@@ -46,6 +46,9 @@ dependencies:
   video_player: ^2.10.0
   firebase_storage: ^12.4.10
   intl: ^0.20.2
+  qr_flutter: ^4.1.0
+  encrypt: ^5.0.3
+  mobile_scanner: ^7.0.1
 
 dev_dependencies:
   flutter_test:

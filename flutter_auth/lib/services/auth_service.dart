@@ -102,6 +102,7 @@ Future<User?> signInClubWithEmail({
         'createdAt': FieldValue.serverTimestamp(),
         'members_count': 0,
         'events_posted': 0,
+        'role': 'club',
       });
     }
 

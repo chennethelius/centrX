@@ -3,6 +3,7 @@ import 'package:flutter_auth/components/bottom_nav_bar.dart';
 import 'package:flutter_auth/pages/home_page.dart';
 import 'package:flutter_auth/pages/events_page.dart';
 import 'package:flutter_auth/pages/rewards_page.dart';
+import 'package:flutter_auth/pages/qr_scanner_page.dart';
 
 
 
@@ -22,6 +23,7 @@ class _AppShellState extends State<AppShell> {
     HomePage(),
     EventsPage(),
     RewardsPage(),
+    QrScannerPage(),
   ];
 
   void _onTabChanged(int index) {

@@ -19,31 +19,35 @@ class BentoItem {
   });
 }
 
-/// A grid of customizable bento cards.
+/// A responsive 2-column grid of bento cards with flexible height.
 class BentoGrid extends StatelessWidget {
   final List<BentoItem> items;
-  final int crossAxisCount;
-  final double childAspectRatio;
   final double spacing;
 
   const BentoGrid({
     Key? key,
     required this.items,
-    this.crossAxisCount = 2,
-    this.childAspectRatio = 1.1,
     this.spacing = 16.0,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: crossAxisCount,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: spacing,
-      mainAxisSpacing: spacing,
-      childAspectRatio: childAspectRatio,
-      children: items.map((item) => _BentoCard(item: item)).toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double totalSpacing = spacing;
+        final double itemWidth = (constraints.maxWidth - totalSpacing) / 2;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: items.map((item) {
+            return SizedBox(
+              width: itemWidth,
+              child: _BentoCard(item: item),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
@@ -62,17 +66,17 @@ class _BentoCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.2),
-            Colors.white.withValues(alpha: 0.05),
+            Colors.white.withAlpha(51),
+            Colors.white.withAlpha(13),
           ],
         ),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
+          color: Colors.white.withAlpha(77),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -84,44 +88,46 @@ class _BentoCard extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: item.color.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
+            child: IntrinsicHeight(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: item.color.withAlpha(51),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(item.icon, color: item.color, size: 24),
                   ),
-                  child: Icon(item.icon, color: item.color, size: 24),
-                ),
-                const Spacer(),
-                Text(
-                  item.value,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                  const SizedBox(height: 12),
+                  Text(
+                    item.value,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(height: 4),
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                Text(
-                  item.subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w400,
+                  Text(
+                    item.subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
