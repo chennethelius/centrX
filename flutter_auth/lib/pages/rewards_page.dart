@@ -326,7 +326,7 @@ class _RewardsPageState extends State<RewardsPage>
       padding: EdgeInsets.only(bottom: 100),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 1,
-        childAspectRatio: 1.8,
+        childAspectRatio: 1.7,
         crossAxisSpacing: 15,
         mainAxisSpacing: 15,
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 //import 'pages/old_login_page.dart';
 import 'components/app_shell.dart';
 import 'login/new_login_page.dart';
+//import 'pages/club_page.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';

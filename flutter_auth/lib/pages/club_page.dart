@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_auth/pages/post_event_page.dart';
-import '../models/event.dart';
+import '../components/event_card.dart';
 import '../components/logout_button.dart';
 import 'package:iconly/iconly.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_auth/components/bento_grid.dart';
+import '../models/event.dart';
 
 class ClubPage extends StatefulWidget {
   const ClubPage({super.key});
@@ -18,6 +19,61 @@ class ClubPage extends StatefulWidget {
 class _ClubPageState extends State<ClubPage> {
   final String clubName = FirebaseAuth.instance.currentUser?.displayName ?? '';
   final int memberCount = 47;
+
+  Stream<List<Event>> _fetchClubEvents() {
+    final user = FirebaseAuth.instance.currentUser;
+    final clubId = user?.uid;
+
+    return FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(clubId)
+        .collection('events')
+        .orderBy('eventDate')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              return Event.fromJson(data, doc.id);
+            }).toList());
+  }
+
+  Widget _buildEventsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Upcoming Events',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        StreamBuilder<List<Event>>(
+          stream: _fetchClubEvents(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(
+                  child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Text('No upcoming events', style: TextStyle(color: Colors.white));
+            } else {
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  return EventCard(event: snapshot.data![index]);
+                },
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +93,6 @@ class _ClubPageState extends State<ClubPage> {
         child: SafeArea(
           child: CustomScrollView(
             slivers: [
-              // App Bar
               SliverAppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
@@ -62,19 +117,14 @@ class _ClubPageState extends State<ClubPage> {
                   ),
                 ],
               ),
-              
-              // Content
               SliverPadding(
                 padding: const EdgeInsets.all(16),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    // Club Header
                     _buildClubHeader(),
                     const SizedBox(height: 24),
                     BentoGrid(
-                      crossAxisCount: 2,               // optional (default 2)
-                      childAspectRatio: 1.1,           // optional
-                      spacing: 16.0,                   // optional
+                      spacing: 16.0,
                       items: [
                         BentoItem(
                           title: 'Likes',
@@ -92,9 +142,9 @@ class _ClubPageState extends State<ClubPage> {
                         ),
                       ],
                     ),
-                    // Events Section
-                    //_buildEventsSection(),
-                    const SizedBox(height: 100), // Space for FAB
+                    const SizedBox(height: 24),
+                    _buildEventsSection(),
+                    const SizedBox(height: 100),
                     LogoutButton(),
                   ]),
                 ),
@@ -180,141 +230,6 @@ class _ClubPageState extends State<ClubPage> {
       ),
     );
   }
-
-
-/*
-  Widget _buildEventsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Upcoming Events',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...upcomingEvents.map((event) => _buildEventCard(event)),
-      ],
-    );
-  }
-*/
-/*
-  Widget _buildEventCard(Event event) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.fromRGBO(255, 255, 255, 0.2),
-                  Color.fromRGBO(255, 255, 255, 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.all(Radius.circular(16)),
-              border: Border.fromBorderSide(
-                BorderSide(
-                  color: Color.fromRGBO(255, 255, 255, 0.3),
-                  width: 1,
-                ),
-              ),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        event.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: const BoxDecoration(
-                        color: Color.fromRGBO(255, 255, 255, 0.2),
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.people_outline,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${event.attendees}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_outlined,
-                      color: Color.fromRGBO(255, 255, 255, 0.7),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${event.date} • ${event.time}',
-                      style: const TextStyle(
-                        color: Color.fromRGBO(255, 255, 255, 0.8),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      color: Color.fromRGBO(255, 255, 255, 0.7),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      event.location,
-                      style: const TextStyle(
-                        color: Color.fromRGBO(255, 255, 255, 0.8),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-*/
 
   Widget _buildFloatingActionButton() {
     return ClipRRect(

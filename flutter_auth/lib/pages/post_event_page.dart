@@ -6,9 +6,10 @@ import 'package:video_player/video_player.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
 
 import '../models/event.dart';
-import '../services/post_service.dart';
+import '../services/event_service.dart';
 
 class PostEventPage extends StatefulWidget {
   const PostEventPage({super.key});
@@ -185,6 +186,7 @@ class _PostEventPageState extends State<PostEventPage> {
     try {
       final user = FirebaseAuth.instance.currentUser!;
       final clubId = user.uid;
+      final Uuid uuid = const Uuid();
 
       final eventRef = FirebaseFirestore.instance
           .collection('clubs')
@@ -210,7 +212,7 @@ class _PostEventPageState extends State<PostEventPage> {
         likeCount: 0,
         commentCount: 0,
         isRsvped: false,
-        mediaId: '',
+        mediaId: uuid.v4(),
         eventId: eventId,
         ownerId: user.uid,
         clubname: clubName,
@@ -232,7 +234,7 @@ class _PostEventPageState extends State<PostEventPage> {
         isQrEnabled: false,
       );
 
-      await PostService().createEventWithMedia(
+      await EventService().createEventWithMedia(
         clubId: clubId,
         event: event,
       );

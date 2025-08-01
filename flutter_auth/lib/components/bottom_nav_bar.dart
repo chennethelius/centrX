@@ -33,6 +33,11 @@ class BottomNavBar extends StatelessWidget {
           unselectedIcon: IconlyLight.star,
           selectedColor: const Color.fromARGB(255, 102, 201, 247),
         ),
+        CrystalNavigationBarItem(
+          icon: IconlyBold.scan,
+          unselectedIcon: IconlyBold.scan,
+          selectedColor: Colors.yellow,
+        ),
       ],
       backgroundColor: Colors.black.withValues(alpha: 0.3),
       unselectedItemColor: Colors.white70,

@@ -62,7 +62,15 @@ class _HomePageState extends State<HomePage> {
             return Center(child: Text('Error: ${snap.error}'));
           }
           if (!snap.hasData || !snap.data!.exists) {
-            return const Center(child: Text('No profile data found.'));
+            return Center(
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("No profile data found."),
+                  LogoutButton(),
+                ],
+              ),
+            );
           }
 
           final data = snap.data!.data()! as Map<String, dynamic>;
@@ -98,9 +106,6 @@ class _HomePageState extends State<HomePage> {
 
                     const SizedBox(height: 24),
                     BentoGrid(
-                      crossAxisCount: 2,               // optional (default 2)
-                      childAspectRatio: 1.1,           // optional
-                      spacing: 16.0,                   // optional
                       items: [
                         BentoItem(
                           title: 'Events',
