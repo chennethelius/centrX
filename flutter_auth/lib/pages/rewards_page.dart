@@ -138,7 +138,7 @@ class _RewardsPageState extends State<RewardsPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold(/*
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -294,7 +294,7 @@ class _RewardsPageState extends State<RewardsPage>
               icon: Icon(Icons.shopping_cart),
               label: Text('Cart (${cart.length})'),
             )
-          : null,
+          : null,*/
     );
   }
 
