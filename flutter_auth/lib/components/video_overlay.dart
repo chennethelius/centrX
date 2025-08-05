@@ -97,7 +97,7 @@ class VideoOverlay extends StatelessWidget {
                 onTap: onCommentTap,
               ),
               const SizedBox(height: 90),
-              RsvpButton(clubId: clubId, eventId: eventId)
+              RsvpButton(clubId: clubId, eventId: eventId, mediaId: mediaId,)
             ],
           ),
         ),
