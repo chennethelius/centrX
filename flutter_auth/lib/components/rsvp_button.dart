@@ -9,9 +9,11 @@ import '../services/rsvp_service.dart';
 class RsvpButton extends StatefulWidget {
   final String clubId;
   final String eventId;
+  final String mediaId;
 
   const RsvpButton({
     Key? key,
+    required this.mediaId,
     required this.clubId,
     required this.eventId,
   }) : super(key: key);

@@ -49,6 +49,7 @@ class EventCard extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (_) => EventQrPage(
+          mediaId: event.mediaId,
           clubId:  event.ownerId,
           eventId: event.eventId,
         ),

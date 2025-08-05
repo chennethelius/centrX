@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_auth/services/rsvp_service.dart';
@@ -14,69 +12,53 @@ class QrScannerPage extends StatefulWidget {
 class _QrScannerPageState extends State<QrScannerPage> {
   bool _isProcessing = false;
   final MobileScannerController _controller = MobileScannerController(
-    // enable torch, front/back camera toggling, etc.
     detectionSpeed: DetectionSpeed.normal,
   );
 
+  Future<void> _showMessage(String title, String msg) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(msg),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+        ],
+      ),
+    );
+  }
+
   void _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
-    final List<Barcode> barcodes = capture.barcodes;
+    final barcodes = capture.barcodes;
     if (barcodes.isEmpty) return;
 
     setState(() => _isProcessing = true);
     _controller.stop();
 
-    final raw = barcodes.first.rawValue ?? '';
+    final raw = barcodes.first.rawValue?.trim() ?? '';
     try {
-      // 1) Parse JSON payload
-      final data = json.decode(raw) as Map<String, dynamic>;
-      final clubId  = data['clubId']  as String;
-      final eventId = data['eventId'] as String;
-      // final token = data['token'] as String; // if you embedded one
-
-      // 2) (optional) verify/decrypt token here...
-
-      // 3) Perform RSVP
-      await RsvpService.rsvpToEvent(
-        clubId:  clubId,
-        eventId: eventId,
-      );
-
-      // 4) Show success dialog
-      if (!mounted) return;
-      await showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Check-In Successful'),
-          content: const Text('Your RSVP has been recorded!'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } catch (err) {
-      // Handle parse/auth errors
-      if (mounted) {
-        await showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Error'),
-            content: Text('Could not process QR code:\n$err'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+      // Expect exactly 4 parts: clubId|eventId|timestamp|mediaId
+      final parts = raw.split('|');
+      if (parts.length != 4) {
+        throw FormatException('Expected clubId|eventId|timestamp|mediaId, got ${parts.length} parts instead.');
       }
+      final clubId   = parts[0];
+      final eventId  = parts[1];
+      final timeStamp = parts[2];
+      final mediaId  = parts[3];
+      // We ignore the timestamp for now (parts[2])
+
+      // Perform the RSVP
+      await RsvpService.checkInEvent(clubId: clubId, eventId: eventId, mediaId: mediaId);
+
+      await _showMessage('Check-In Successful', 'Your RSVP has been recorded!');
+    } catch (err) {
+      await _showMessage('Error', 'could not process QR code:\n$err');
     }
 
-    // reset for next scan
+    // Reset for next scan
     if (mounted) {
       setState(() => _isProcessing = false);
       _controller.start();
@@ -95,27 +77,15 @@ class _QrScannerPageState extends State<QrScannerPage> {
       appBar: AppBar(
         title: const Text('Scan Event QR'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () => _controller.toggleTorch(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.cameraswitch),
-            onPressed: () => _controller.switchCamera(),
-          ),
+          IconButton(icon: const Icon(Icons.flash_on),    onPressed: _controller.toggleTorch),
+          IconButton(icon: const Icon(Icons.cameraswitch), onPressed: _controller.switchCamera),
         ],
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onDetect,
-          ),
+          MobileScanner(controller: _controller, onDetect: _onDetect),
           if (_isProcessing)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
-          // optionally draw a semi-transparent overlay and a framing rectangle
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         ],
       ),
     );

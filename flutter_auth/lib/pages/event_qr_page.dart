@@ -5,11 +5,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class EventQrPage extends StatefulWidget {
   final String clubId;
   final String eventId;
+  final String mediaId;
 
   const EventQrPage({
     Key? key,
     required this.clubId,
     required this.eventId,
+    required this.mediaId,
   }) : super(key: key);
 
   @override
@@ -64,7 +66,7 @@ class _EventQrPageState extends State<EventQrPage> {
 
   void _generateQr() {
     final ts = DateTime.now().millisecondsSinceEpoch;
-    final token = '${widget.clubId}|${widget.eventId}|$ts';
+    final token = '${widget.clubId}|${widget.eventId}|$ts|${widget.mediaId}';
     setState(() => _qrData = token);
   }
 
