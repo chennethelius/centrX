@@ -15,7 +15,7 @@ class EventService {
     required Event event,
   }) async {
     // Reference to the event document
-    final eventRef = _firestore
+    final clubEventRef = _firestore
         .collection('clubs')
         .doc(clubId)
         .collection('events')
@@ -25,15 +25,15 @@ class EventService {
     final batch = _firestore.batch();
 
     // 1) Write the event document
-    batch.set(eventRef, event.toJson());
+    batch.set(clubEventRef, event.toJson());
 
-    // 2) Write each media URL into the top‑level /media collection
+    // 2) Write each media URL into the top‑level /event collection
     for (final mediaUrl in event.mediaUrls) {
-      final mediaId = event.mediaId;
-      final mediaRef = _firestore.collection('media').doc(mediaId);
+      final eventId = event.eventId;
+      final eventRef = _firestore.collection('events').doc(eventId);
       final map = event.toJson();
       map['mediaUrl'] = mediaUrl;
-      batch.set(mediaRef, map);
+      batch.set(eventRef, map);
     }
 
     // Commit both writes together
@@ -45,11 +45,10 @@ Future<void> deleteEvent({
 }) async {
   final String clubId = event.ownerId;
   final String eventId = event.eventId;
-  final String mediaId = event.mediaId;
   final List<String> rsvpList = event.rsvpList;
 
   final clubEventRef = _firestore.collection('clubs').doc(clubId).collection('events').doc(eventId);
-  final mediaRef = _firestore.collection('media').doc(mediaId);
+  final eventRef = _firestore.collection('events').doc(eventId);
 
   final batch = _firestore.batch();
 
@@ -57,8 +56,8 @@ Future<void> deleteEvent({
   batch.delete(clubEventRef);
 
   // b. Delete associated media document
-  if (mediaId.isNotEmpty) {
-    batch.delete(mediaRef);
+  if (eventId.isNotEmpty) {
+    batch.delete(eventRef);
   }
 
   // c. Delete event ID key from each user's events_registered map field

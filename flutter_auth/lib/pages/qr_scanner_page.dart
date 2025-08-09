@@ -39,19 +39,18 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
     final raw = barcodes.first.rawValue?.trim() ?? '';
     try {
-      // Expect exactly 4 parts: clubId|eventId|timestamp|mediaId
+      // Expect exactly 3 parts: clubId|eventId|timestamp
       final parts = raw.split('|');
-      if (parts.length != 4) {
-        throw FormatException('Expected clubId|eventId|timestamp|mediaId, got ${parts.length} parts instead.');
+      if (parts.length != 3) {
+        throw FormatException('Expected clubId|eventId|timestamp, got ${parts.length} parts instead.');
       }
       final clubId   = parts[0];
       final eventId  = parts[1];
       final timeStamp = parts[2];
-      final mediaId  = parts[3];
       // We ignore the timestamp for now (parts[2])
 
       // Perform the RSVP
-      await RsvpService.checkInEvent(clubId: clubId, eventId: eventId, mediaId: mediaId);
+      await RsvpService.checkInEvent(clubId: clubId, eventId: eventId);
 
       await _showMessage('Check-In Successful', 'Your RSVP has been recorded!');
     } catch (err) {

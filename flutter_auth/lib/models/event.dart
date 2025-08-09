@@ -12,7 +12,6 @@ class Event {
   final String title;
   final String description;
   final String location;
-  final String mediaId;
   final DateTime createdAt;
   final DateTime eventDate;
   final List<String> mediaUrls;
@@ -22,7 +21,6 @@ class Event {
   Event({
     required this.isQrEnabled,
     required this.durationMinutes,
-    required this.mediaId,
     required this.likeCount,
     required this.commentCount,
     required this.isRsvped,
@@ -45,7 +43,6 @@ class Event {
       commentCount: json['commentCount']      as int?        ?? 0,
       likeCount:    json['likeCount']         as int?        ?? 0,
       isRsvped:     json['isRsvped']          as bool?       ?? false,
-      mediaId:      json['mediaId']           as String?     ?? '',
       eventId:        id,
       ownerId:       json['ownerId']       as String?        ?? '',
       clubname:      json['clubname']      as String?        ?? '',
@@ -68,7 +65,6 @@ class Event {
       'commentCount':   commentCount,
       'likeCount':      likeCount,
       'isRsvped':       isRsvped,
-      'mediaId':        mediaId,
       'eventId':        eventId,
       'ownerId':        ownerId,
       'clubname':       clubname,

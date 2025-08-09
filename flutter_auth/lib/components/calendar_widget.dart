@@ -1,23 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
+import 'dart:async';
 import 'dart:ui';
 
-class CalendarWidget extends StatefulWidget {
-  /// dates to mark with an “event dot”
-  final List<DateTime> rsvpDays;
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/calendar_service.dart';
 
-  const CalendarWidget({
-    Key? key,
-    required this.rsvpDays,
-  }) : super(key: key);
+class CalendarWidget extends StatefulWidget {
+  const CalendarWidget({Key? key}) : super(key: key);
 
   @override
   State<CalendarWidget> createState() => _CalendarWidgetState();
 }
 
 class _CalendarWidgetState extends State<CalendarWidget> {
+  final CalendarService _service = CalendarService();
+  List<DateTime> _rsvpDays = [];
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay = DateTime.now();
+
+  StreamSubscription<List<DateTime>>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Only start listening if authenticated
+      _subscription = _service.rsvpDatesStream().listen((dates) {
+        if (mounted) {
+          setState(() {
+            _rsvpDays = dates;
+          });
+        }
+      }, onError: (err) {
+        debugPrint('Calendar stream error: $err');
+      });
+    } else {
+      debugPrint('CalendarWidget: No user logged in, skipping stream.');
+    }
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,17 +57,17 @@ class _CalendarWidgetState extends State<CalendarWidget> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.2),
-            Colors.white.withValues(alpha: 0.1),
+            Colors.white.withAlpha(51),
+            Colors.white.withAlpha(25),
           ],
         ),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
+          color: Colors.white.withAlpha(77),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 25,
             offset: const Offset(0, 12),
           ),
@@ -58,7 +87,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withAlpha(51),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Icon(
@@ -132,7 +161,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
+          color: Colors.white.withAlpha(26),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: Colors.white, size: 20),
@@ -148,18 +177,20 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     return Column(
       children: [
         Row(
-          children: weekdays.map((d) => Expanded(
-            child: Center(
-              child: Text(
-                d,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          )).toList(),
+          children: weekdays
+              .map((d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ))
+              .toList(),
         ),
         ...List.generate(6, (week) {
           return Row(
@@ -172,7 +203,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               final thisDay = DateTime(_focusedDay.year, _focusedDay.month, dayNum);
               final isSelected = _selectedDay != null && _isSameDay(_selectedDay!, thisDay);
               final isToday = _isSameDay(DateTime.now(), thisDay);
-              final hasEvent = widget.rsvpDays.any((d) => _isSameDay(d, thisDay));
+              final hasEvent = _rsvpDays.any((d) => _isSameDay(d, thisDay));
 
               return Expanded(
                 child: GestureDetector(
@@ -182,14 +213,14 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     margin: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? Colors.white.withValues(alpha: 0.3)
+                          ? Colors.white.withAlpha(77)
                           : isToday
-                              ? Colors.white.withValues(alpha: 0.1)
+                              ? Colors.white.withAlpha(26)
                               : null,
                       borderRadius: BorderRadius.circular(12),
                       border: isSelected
                           ? Border.all(
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: Colors.white.withAlpha(153),
                               width: 1.5,
                             )
                           : null,

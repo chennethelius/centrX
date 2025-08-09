@@ -6,14 +6,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 //TODO: like animation, double-tap screen to like
 
 class LikeButton extends StatelessWidget {
-  final String mediaId;
+  final String eventId;
 
-  const LikeButton({Key? key, required this.mediaId}) : super(key: key);
+  const LikeButton({Key? key, required this.eventId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final docRef = FirebaseFirestore.instance.collection('media').doc(mediaId);
+    final docRef = FirebaseFirestore.instance.collection('events').doc(eventId);
 
     return StreamBuilder<DocumentSnapshot>(
       stream: docRef.snapshots(),
@@ -36,6 +36,7 @@ class LikeButton extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
+            
             FirebaseFirestore.instance.runTransaction((tx) async {
               final fresh = await tx.get(docRef);
               final map   = fresh.data()!;

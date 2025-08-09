@@ -124,8 +124,10 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    CalendarWidget(rsvpDays: _rsvpDays),
-                    const SizedBox(height: 24),
+                    if (user != null) ...[
+                      const SizedBox(height: 24),
+                      const CalendarWidget(),
+                    ],
                     LogoutButton(),
                   ],
                 ),
