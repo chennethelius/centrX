@@ -36,28 +36,4 @@ Centrx connects students, clubs, and campus organizations in one platform:
 
 ---
 
-## Project Structure
-
-```
-lib/
-├── main.dart           # Entry point with authentication guard
-├── core/               # Constants, theme, utilities
-├── services/           # Firebase and data integration logic
-├── models/             # Data classes and serializers
-├── providers/          # Riverpod state providers
-├── pages/
-│   ├── auth/           # Login and registration screens
-│   └── app/            # Home, feed, leaderboard, club pages
-└── components/         # Shared widgets, including AppShell and nav bar
-assets/
-├── images/             # Static images and placeholders
-└── fonts/              # Custom font files
-```
-
-* The **`components/`** directory contains `AppShell` (`app_shell.dart`) for bottom-bar navigation and page management.
-* The **auth flow** resides in `pages/auth/` without the navigation bar until login.
-* The **main app UI** uses `AppShell` for in-app navigation after authentication.
-
----
-
 *First release of Centrx. Feedback and contributions are welcome!*
