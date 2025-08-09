@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'dart:ui';
 
-/// Data model for a single bento card.
 class BentoItem {
   final String title;
   final String value;
@@ -19,7 +18,6 @@ class BentoItem {
   });
 }
 
-/// A responsive 2-column grid of bento cards with flexible height.
 class BentoGrid extends StatelessWidget {
   final List<BentoItem> items;
   final double spacing;
@@ -34,8 +32,9 @@ class BentoGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double totalSpacing = spacing;
-        final double itemWidth = (constraints.maxWidth - totalSpacing) / 2;
+        final isSmallScreen = constraints.maxWidth < 360;
+        final columns = isSmallScreen ? 1 : 2;
+        final itemWidth = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
 
         return Wrap(
           spacing: spacing,

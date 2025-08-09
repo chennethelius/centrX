@@ -12,11 +12,9 @@ class VideoOverlay extends StatelessWidget {
   final int likeCount;
   final int commentCount;
   final VoidCallback onCommentTap;
-  final String mediaId;
 
   const VideoOverlay({
     Key? key,
-    required this.mediaId,
     required this.clubId,
     required this.eventId,
     required this.title,
@@ -29,35 +27,43 @@ class VideoOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final size = MediaQuery.of(context).size;
+    final height = size.height;
+    final width = size.width;
+
+    final isSmallScreen = width < 360;
+
     return Stack(
       children: [
         // Bottom‑left info panel
         Positioned(
-          left: 16,
-          bottom: 90,
-          right: 16,
+          left: isSmallScreen ? 12 : 16,
+          right: isSmallScreen ? 12 : 16,
+          bottom: isSmallScreen ? 70 : 90,
           child: Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black45,
+            /*decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: .45),
               borderRadius: BorderRadius.circular(8),
-            ),
+            ),*/
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                    fontSize: isSmallScreen ? 16 : 18,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isSmallScreen ? 12 : 14,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -69,7 +75,10 @@ class VideoOverlay extends StatelessWidget {
                     Expanded(
                       child: Text(
                         location,
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: isSmallScreen ? 11 : 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -83,12 +92,12 @@ class VideoOverlay extends StatelessWidget {
 
         // Middle‑right action buttons
         Positioned(
-          right: 16,
-          top: screenHeight * 0.5,
+          right: isSmallScreen ? 12 : 16,
+          top: height * 0.5,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              LikeButton(mediaId: mediaId),
+              LikeButton(eventId: eventId,),
               const SizedBox(height: 10),
               _OverlayButton(
                 icon: IconlyBold.chat,
@@ -96,8 +105,11 @@ class VideoOverlay extends StatelessWidget {
                 color: Colors.white,
                 onTap: onCommentTap,
               ),
-              const SizedBox(height: 90),
-              RsvpButton(clubId: clubId, eventId: eventId, mediaId: mediaId,)
+              SizedBox(height: isSmallScreen ? 70 : 90),
+              RsvpButton(
+                clubId: clubId,
+                eventId: eventId,
+              ),
             ],
           ),
         ),
@@ -124,35 +136,38 @@ class _OverlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isSmallScreen = width < 360;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 6,
-                  offset: Offset(0, -5),
-                ),
-              ],
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 6,
+              offset: const Offset(0, -5),
             ),
+          ],
+        ),
         child: Column(
           children: [
             Icon(
               icon,
-              size: 38,
+              size: isSmallScreen ? 32 : 38,
               color: active ? Colors.greenAccent : color,
             ),
             if (count >= 0) ...[
               const SizedBox(height: 2),
               Text(
                 count.toString(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Roboto',
                   fontWeight: FontWeight.w600,
                   color: Colors.white70,
-                  fontSize: 13,
+                  fontSize: isSmallScreen ? 11 : 13,
                 ),
               ),
             ],

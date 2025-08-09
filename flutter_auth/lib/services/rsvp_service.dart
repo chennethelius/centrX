@@ -49,7 +49,6 @@ class RsvpService {
   static Future<void> checkInEvent({
     required String clubId,
     required String eventId,
-    required String mediaId,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -59,11 +58,11 @@ class RsvpService {
       );
     }
 
-    final mediaRef = _firestore
-        .collection('media')
-        .doc(mediaId);
-    
     final eventRef = _firestore
+        .collection('events')
+        .doc(eventId);
+    
+    final clubEventRef = _firestore
         .collection("clubs")
         .doc(clubId)
         .collection("events")
@@ -74,11 +73,11 @@ class RsvpService {
 
     final batch = _firestore.batch();
 
-    batch.update(mediaRef, {
+    batch.update(clubEventRef, {
       'attendanceList': FieldValue.arrayUnion([uid]),
     });
 
-        batch.update(eventRef, {
+    batch.update(eventRef, {
       'attendanceList': FieldValue.arrayUnion([uid]),
     });
 

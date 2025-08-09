@@ -9,11 +9,9 @@ import '../services/rsvp_service.dart';
 class RsvpButton extends StatefulWidget {
   final String clubId;
   final String eventId;
-  final String mediaId;
 
   const RsvpButton({
     Key? key,
-    required this.mediaId,
     required this.clubId,
     required this.eventId,
   }) : super(key: key);
@@ -24,13 +22,13 @@ class RsvpButton extends StatefulWidget {
 
 class _RsvpButtonState extends State<RsvpButton> {
   final _firestore = FirebaseFirestore.instance;
-  late final DocumentReference _eventRef;
+  late final DocumentReference _clubEventRef;
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _eventRef = _firestore
+    _clubEventRef = _firestore
         .collection('clubs')
         .doc(widget.clubId)
         .collection('events')
@@ -86,7 +84,7 @@ class _RsvpButtonState extends State<RsvpButton> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: _eventRef.snapshots(),
+      stream: _clubEventRef.snapshots(),
       builder: (context, snap) {
         if (!snap.hasData || !snap.data!.exists) {
           return _buildIcon(false);

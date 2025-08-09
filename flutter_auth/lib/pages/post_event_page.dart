@@ -212,7 +212,6 @@ class _PostEventPageState extends State<PostEventPage> {
         likeCount: 0,
         commentCount: 0,
         isRsvped: false,
-        mediaId: uuid.v4(),
         eventId: eventId,
         ownerId: user.uid,
         clubname: clubName,

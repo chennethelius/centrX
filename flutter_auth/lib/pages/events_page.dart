@@ -18,7 +18,7 @@ class EventsPage extends StatefulWidget {
 class _EventsPageState extends State<EventsPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PageController _pageController = PageController();
-  late final StreamSubscription<QuerySnapshot> _mediaSub;
+  late final StreamSubscription<QuerySnapshot> _eventSub;
 
   // Keep both the raw docs and the player controllers
   final List<QueryDocumentSnapshot> _mediaDocs = [];
@@ -29,8 +29,8 @@ class _EventsPageState extends State<EventsPage> {
   void initState() {
     super.initState();
     // Listen to /media and rebuild on every change
-    _mediaSub = _firestore
-        .collection('media')
+    _eventSub = _firestore
+        .collection('events')
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen(_onMediaSnapshot);
@@ -93,7 +93,7 @@ class _EventsPageState extends State<EventsPage> {
     for (var c in _videoControllers) {
       c.dispose();
     }
-    _mediaSub.cancel(); 
+    _eventSub.cancel(); 
     _pageController.dispose();
     super.dispose();
   }
@@ -131,7 +131,6 @@ class _EventsPageState extends State<EventsPage> {
           final location  = data['location']     as String? ?? '';
           final likeCount = data['likeCount']    as int? ?? 0;
           final commentCount = data['commentCount']    as int? ?? 0;
-          final mediaId = data['mediaId'] as String? ?? '';
           final clubId = data['ownerId'] as String? ?? '';
           final eventId = data['eventId'] as String? ?? '';
 
@@ -166,13 +165,12 @@ class _EventsPageState extends State<EventsPage> {
                 VideoOverlay(
                   eventId: eventId,
                   clubId: clubId,
-                  mediaId: mediaId,
                   title:    title,
                   description: desc,
                   location:    location,
                   likeCount: likeCount,
                   commentCount: commentCount,
-                  onCommentTap:() => (SocialButtonServices.showComments(context, mediaId)),
+                  onCommentTap:() => (SocialButtonServices.showComments(context, eventId)),
                 ),
               ],
             ),
