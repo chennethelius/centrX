@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 //import 'pages/old_login_page.dart';
 import 'components/app_shell.dart';
 import 'login/new_login_page.dart';
+import 'pages/home_page.dart';
+import 'pages/club_page.dart';
 //import 'pages/club_page.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
@@ -19,15 +21,35 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  Future<String?> _getUserRole(String uid) async {
+    final firestore = AuthService().firestore;
+    final userDoc = await firestore.collection('users').doc(uid).get();
+    if (userDoc.exists) return userDoc.data()?['role'] as String?;
+    final clubDoc = await firestore.collection('clubs').doc(uid).get();
+    if (clubDoc.exists) return clubDoc.data()?['role'] as String?;
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-     final isLoggedIn = AuthService().currentUser != null;
-
+    final user = AuthService().currentUser;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      // if user not logged in, direct to login page, but if user is logged in, go to appshell
-      home: isLoggedIn ? const AppShell() : const NewLoginPage(),
-      
+      home: user == null
+          ? const NewLoginPage()
+          : FutureBuilder<String?>(
+              future: _getUserRole(user.uid),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                }
+                final role = snapshot.data;
+                if (role == 'student') return const AppShell();
+                if (role == 'club') return const ClubPage();
+                // fallback to login if role is missing
+                return const NewLoginPage();
+              },
+            ),
     );
   }
 }
