@@ -10,6 +10,8 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  FirebaseFirestore get firestore => _firestore;
+
   /// Triggers Google Sign-In flow
   /// Returns a Firebase [User] on success or null on cancel/error
   Future<User?> authenticateWithGoogle() async {
@@ -129,3 +131,5 @@ Future<User?> signInClubWithEmail({
   /// Current Firebase user, if signed in
   User? get currentUser => _auth.currentUser;
 }
+
+
