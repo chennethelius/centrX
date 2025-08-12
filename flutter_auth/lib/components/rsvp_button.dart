@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:iconly/iconly.dart';
 import 'package:intl/intl.dart';
 import '../services/rsvp_service.dart';
+import '../pages/rsvp_details.dart';
 
 /// A button that shows RSVP status and count, and invokes RsvpService.
 class RsvpButton extends StatefulWidget {
@@ -35,50 +36,21 @@ class _RsvpButtonState extends State<RsvpButton> {
         .doc(widget.eventId);
   }
 
-  Future<void> _confirmAndRsvp(Map<String, dynamic> data) async {
-    final title = data['title'] as String? ?? 'Event';
-    final desc = data['description'] as String? ?? '';
-    final host = data['hostClubName'] as String? ?? '';
-    final ts = (data['eventDate'] as Timestamp).toDate();
-    final loc = data['location'] as String? ?? '';
-    final formatted = DateFormat.yMMMd().add_jm().format(ts);
-
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(desc),
-            const SizedBox(height: 8),
-            Text('Host: $host'),
-            Text('When: $formatted'),
-            Text('Where: $loc'),
-          ],
+  Future<void> _openRsvpDetails(Map<String, dynamic> data, bool isRsvped) async {
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (_, __, ___) => RsvpDetailsPage(
+          eventData: data,
+          clubId: widget.clubId,
+          eventId: widget.eventId,
+          isRsvped: isRsvped,
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes')),
-        ],
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
       ),
     );
-    if (yes != true) return;
-
-    setState(() => _busy = true);
-    try {
-      await RsvpService.rsvpToEvent(
-        clubId: widget.clubId,
-        eventId: widget.eventId,
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not RSVP: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 
   @override
@@ -96,7 +68,7 @@ class _RsvpButtonState extends State<RsvpButton> {
         final isRsvped = attendance.contains(uid);
 
         return GestureDetector(
-          onTap: (_busy || isRsvped) ? null : () => _confirmAndRsvp(data),
+          onTap: (_busy) ? null : () => _openRsvpDetails(data, isRsvped),
           child: _buildIcon(isRsvped),
         );
       },
