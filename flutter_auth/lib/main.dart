@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
               future: _getUserRole(user.uid),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                  return const NewLoginPage();
                 }
                 final role = snapshot.data;
                 if (role == 'student') return const AppShell();

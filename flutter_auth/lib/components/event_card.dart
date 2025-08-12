@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import '../models/event.dart';
 import '../services/event_service.dart';
-import '../pages/event_qr_page.dart';
+import '../pages/event_details_page.dart';
 
 class EventCard extends StatelessWidget {
   final Event event;
@@ -44,14 +44,11 @@ class EventCard extends StatelessWidget {
     }
   }
 
-  void _openQrPage(BuildContext context) {
+  void _openDetailsPage(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EventQrPage(
-          clubId:  event.ownerId,
-          eventId: event.eventId,
-        ),
+        builder: (_) => EventDetailsPage(event: event),
       ),
     );
   }
@@ -59,7 +56,7 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _openQrPage(context),
+      onTap: () => _openDetailsPage(context),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         child: Stack(
