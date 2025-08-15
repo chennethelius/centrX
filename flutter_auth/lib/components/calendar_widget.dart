@@ -57,38 +57,38 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       final isWide = constraints.maxWidth > 600;
+      final base = constraints.maxWidth / 20;
 
-      // Outer container styling (keeps your look & feel)
       final content = Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(base * 1.4),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withAlpha(30),
-              Colors.white.withAlpha(10),
+              Colors.white.withAlpha((base * 1.07).toInt()),
+              Colors.white.withAlpha((base * 0.36).toInt()),
             ],
           ),
           border: Border.all(
-            color: Colors.white.withAlpha(80),
-            width: 1,
+            color: Colors.white.withAlpha((base * 3.6).toInt()),
+            width: base * 0.05,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(20),
-              blurRadius: 25,
-              offset: const Offset(0, 12),
+              color: Colors.black.withAlpha((base * 0.71).toInt()),
+              blurRadius: base * 1.25,
+              offset: Offset(0, base * 0.6),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(base * 1.4),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: ImageFilter.blur(sigmaX: base, sigmaY: base),
             child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
+              padding: EdgeInsets.all(base),
+              child: isWide ? _buildWideLayout(base) : _buildNarrowLayout(base),
             ),
           ),
         ),
@@ -99,103 +99,96 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   }
 
   // Wide: calendar on left, schedule on right
-  Widget _buildWideLayout() {
+  Widget _buildWideLayout(double base) {
     return Row(
       children: [
-        // Left column: calendar
         Expanded(
           flex: 1,
           child: Column(
             children: [
-              _buildHeader(),
-              const SizedBox(height: 16),
-              _buildCalendarGrid(),
+              _buildHeader(base),
+              SizedBox(height: base * 0.8),
+              _buildCalendarGrid(base),
             ],
           ),
         ),
-
-        const SizedBox(width: 16),
-
-        // Right column: schedule for selected day
+        SizedBox(width: base * 0.8),
         Expanded(
           flex: 1,
-          child: _buildEventSchedule(),
+          child: _buildEventSchedule(base),
         )
       ],
     );
   }
 
   // Narrow: calendar above, schedule below
-  Widget _buildNarrowLayout() {
+  Widget _buildNarrowLayout(double base) {
     return Column(
       children: [
-        _buildHeader(),
-        const SizedBox(height: 12),
-        _buildCalendarGrid(),
-        const SizedBox(height: 12),
+        _buildHeader(base),
+        SizedBox(height: base * 0.6),
+        _buildCalendarGrid(base),
+        SizedBox(height: base * 0.6),
         SizedBox(
-          height: 220, // limit height so page doesn't get extremely long
-          child: _buildEventSchedule(),
+          height: base * 11,
+          child: _buildEventSchedule(base),
         ),
       ],
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(double base) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(40),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(IconlyBold.calendar, color: Colors.white, size: 20),
-        ),
-        const SizedBox(width: 12),
-        const Text('Your Events',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
-        const Spacer(),
         _navButton(
           icon: IconlyLight.arrow_left_2,
           onTap: () => setState(() {
             _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1);
           }),
+          base: base,
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: base * 0.6),
         Text(
           _getMonthYear(_focusedDay),
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+          style: TextStyle(fontSize: base * 0.9, fontWeight: FontWeight.w700, color: Colors.white),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: base * 0.6),
         _navButton(
           icon: IconlyLight.arrow_right_2,
           onTap: () => setState(() {
             _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
           }),
+          base: base,
         ),
       ],
     );
   }
 
-  Widget _navButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _navButton({required IconData icon, required VoidCallback onTap, required double base}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(base * 0.4),
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha(26),
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white.withAlpha((base * 1.3).toInt()),
+          borderRadius: BorderRadius.circular(base * 0.6),
         ),
-        child: Icon(icon, color: Colors.white, size: 18),
+        child: Icon(icon, color: Colors.white, size: base * 0.9),
       ),
     );
   }
 
-  Widget _buildCalendarGrid() {
+  Widget _buildCalendarGrid(double base) {
     final daysInMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0).day;
     final firstWeekday = DateTime(_focusedDay.year, _focusedDay.month, 1).weekday; // 1 = Mon
+    final prevMonth = DateTime(_focusedDay.year, _focusedDay.month - 1, 0);
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // Calculate how many rows we need
+    final daysFromPrevMonth = firstWeekday - 1;
+    final totalCells = daysFromPrevMonth + daysInMonth;
+    final rowsNeeded = (totalCells / 7).ceil();
 
     return Column(
       children: [
@@ -205,22 +198,39 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     child: Center(
                       child: Text(
                         d,
-                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500, fontSize: 12),
+                        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500, fontSize: base * 0.6),
                       ),
                     ),
                   ))
               .toList(),
         ),
-        const SizedBox(height: 8),
-        ...List.generate(6, (week) {
+        SizedBox(height: base * 0.4),
+        ...List.generate(rowsNeeded, (week) {
           return Row(
             children: List.generate(7, (dow) {
-              final dayNum = week * 7 + dow - firstWeekday + 2;
-              if (dayNum < 1 || dayNum > daysInMonth) {
-                return const Expanded(child: SizedBox(height: 44));
+              final cellIndex = week * 7 + dow;
+              
+              DateTime thisDay;
+              bool isCurrentMonth;
+              int displayDay;
+              
+              if (cellIndex < daysFromPrevMonth) {
+                // Previous month days (only at the beginning)
+                displayDay = prevMonth.day - (daysFromPrevMonth - cellIndex - 1);
+                thisDay = DateTime(prevMonth.year, prevMonth.month, displayDay);
+                isCurrentMonth = false;
+              } else if (cellIndex < daysFromPrevMonth + daysInMonth) {
+                // Current month days
+                displayDay = cellIndex - daysFromPrevMonth + 1;
+                thisDay = DateTime(_focusedDay.year, _focusedDay.month, displayDay);
+                isCurrentMonth = true;
+              } else {
+                // Next month days (fill remaining cells)
+                displayDay = cellIndex - daysFromPrevMonth - daysInMonth + 1;
+                thisDay = DateTime(_focusedDay.year, _focusedDay.month + 1, displayDay);
+                isCurrentMonth = false;
               }
 
-              final thisDay = DateTime(_focusedDay.year, _focusedDay.month, dayNum);
               final isSelected = _selectedDay != null && _isSameDay(_selectedDay!, thisDay);
               final isToday = _isSameDay(DateTime.now(), thisDay);
               final normalized = DateTime(thisDay.year, thisDay.month, thisDay.day);
@@ -230,34 +240,45 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 child: GestureDetector(
                   onTap: () => setState(() => _selectedDay = thisDay),
                   child: Container(
-                    height: 44,
-                    margin: const EdgeInsets.all(3),
+                    height: base * 2.2,
+                    margin: EdgeInsets.all(base * 0.15),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.white.withAlpha(80) : isToday ? Colors.white.withAlpha(30) : null,
-                      borderRadius: BorderRadius.circular(10),
-                      border: isSelected ? Border.all(color: Colors.white.withAlpha(160), width: 1.5) : null,
+                      color: isSelected 
+                          ? Colors.white.withAlpha((base * 4.2).toInt()) 
+                          : isToday 
+                              ? Colors.white.withAlpha((base * 1.6).toInt()) 
+                              : null,
+                      borderRadius: BorderRadius.circular(base * 0.5),
+                      border: isSelected 
+                          ? Border.all(color: Colors.white.withAlpha((base * 8.4).toInt()), width: base * 0.08) 
+                          : null,
                     ),
                     child: Stack(
                       children: [
                         Center(
                           child: Text(
-                            dayNum.toString(),
+                            displayDay.toString(),
                             style: TextStyle(
-                              color: (isSelected || isToday) ? Colors.white : Colors.white70,
+                              color: !isCurrentMonth 
+                                  ? Colors.white.withAlpha(60)  // Gray out other month dates
+                                  : (isSelected || isToday) 
+                                      ? Colors.white 
+                                      : Colors.white70,
                               fontWeight: FontWeight.w600,
+                              fontSize: base * 0.8,
                             ),
                           ),
                         ),
-                        if (hasEvent)
-                          const Positioned(
-                            top: 6,
-                            right: 6,
+                        if (hasEvent && isCurrentMonth)
+                          Positioned(
+                            top: base * 0.27,
+                            right: base * 0.27,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
                                 color: Color(0xFF06B6D4),
                                 shape: BoxShape.circle,
                               ),
-                              child: SizedBox(width: 8, height: 8),
+                              child: SizedBox(width: base * 0.36, height: base * 0.36),
                             ),
                           ),
                       ],
@@ -272,7 +293,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     );
   }
 
-  Widget _buildEventSchedule() {
+  Widget _buildEventSchedule(double base) {
     final selected = _selectedDay ?? DateTime.now();
     final key = DateTime(selected.year, selected.month, selected.day);
     final events = _eventsByDate[key] ?? [];
@@ -281,7 +302,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       return Center(
         child: Text(
           'No events on ${selected.month}/${selected.day}/${selected.year}',
-          style: const TextStyle(color: Colors.white70),
+          style: TextStyle(color: Colors.white70, fontSize: base * 0.7),
         ),
       );
     }
@@ -300,7 +321,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     return ListView.builder(
       itemCount: events.length,
       shrinkWrap: true,
-      padding: const EdgeInsets.only(top: 8),
+      padding: EdgeInsets.only(top: base * 0.4),
       itemBuilder: (context, i) {
         final e = events[i];
         final start = e['startTime'] as DateTime?;
@@ -312,16 +333,16 @@ class _CalendarWidgetState extends State<CalendarWidget> {
             : (start != null ? _fmtTime(start) : 'Time TBA');
 
         return Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
+          margin: EdgeInsets.symmetric(vertical: base * 0.27),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: .12),
-            borderRadius: BorderRadius.circular(10),
-            border: Border(left: BorderSide(color: color, width: 4)),
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(base * 0.5),
+            border: Border(left: BorderSide(color: color, width: base * 0.2)),
           ),
           child: ListTile(
-            title: Text(e['title'] ?? 'Event', style: const TextStyle(color: Colors.white)),
-            subtitle: Text(timeText, style: const TextStyle(color: Colors.white70)),
-            trailing: Text(e['location'] ?? '', style: const TextStyle(color: Colors.white70)),
+            title: Text(e['title'] ?? 'Event', style: TextStyle(color: Colors.white, fontSize: base * 0.8)),
+            subtitle: Text(timeText, style: TextStyle(color: Colors.white70, fontSize: base * 0.6)),
+            trailing: Text(e['location'] ?? '', style: TextStyle(color: Colors.white70, fontSize: base * 0.6)),
             onTap: () {
               // optional: navigate to event detail
             },

@@ -19,13 +19,6 @@ class _HomePageState extends State<HomePage> {
   final User? user = FirebaseAuth.instance.currentUser;
   late final String userFirstName;
 
-  final List<DateTime> _rsvpDays = [
-    DateTime.now().add(const Duration(days: 2)),
-    DateTime.now().add(const Duration(days: 7)),
-    DateTime.now().add(const Duration(days: 12)),
-    DateTime.now().add(const Duration(days: 18)),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -75,11 +68,6 @@ class _HomePageState extends State<HomePage> {
 
           final data = snap.data!.data()! as Map<String, dynamic>;
           final pointsBalance    = data['pointsBalance']    as int? ?? 0;
-          final registeredEvents = List<String>.from(
-            data['events_registered'] as List<dynamic>? ?? <dynamic>[],
-          );
-          final eventCount = registeredEvents.length;
-          final clubsJoined       = data['clubs_joined']     as int? ?? 0;
 
           return Container(
             decoration: const BoxDecoration(
@@ -99,35 +87,71 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    // static points card
+                    // Points label and card
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16,),
+                      child: Text(
+                        'Points',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
                     _buildPointsCard(pointsBalance),
 
                     const SizedBox(height: 24),
-                    BentoGrid(
-                      items: [
-                        BentoItem(
-                          title: 'Events',
-                          value: eventCount.toString(),
-                          subtitle: 'Registered',
-                          icon: IconlyBold.calendar,
-                          color: Colors.red,
-                        ),
-                        BentoItem(
-                          title: 'Clubs',
-                          value: clubsJoined.toString(),
-                          subtitle: 'Joined',
-                          icon: IconlyBold.user_3,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
                     if (user != null) ...[
                       const SizedBox(height: 24),
-                      const CalendarWidget(),
+                      // Calendar flexibility test: calendar (3/4) + bento grid (1/4)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Calendar widget (3/4 width)
+                          Expanded(
+                            flex: 3,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: const CalendarWidget(),
+                            ),
+                          ),
+                          // Bento grid (1/4 width)
+                          Expanded(
+                            flex: 1,
+                            child: BentoGrid(
+                              spacing: 8,
+                              items: [
+                                BentoItem(
+                                  title: 'Today',
+                                  value: '1',
+                                  subtitle: '',
+                                  icon: IconlyBold.calendar,
+                                  color: Colors.white,
+                                ),
+                                BentoItem(
+                                  title: 'Scheduled',
+                                  value: '3',
+                                  subtitle: '',
+                                  icon: IconlyBold.time_circle,
+                                  color: Colors.white,
+                                ),
+                                BentoItem(
+                                  title: 'Completed',
+                                  value: '0',
+                                  subtitle: '',
+                                  icon: IconlyBold.tick_square,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
+                    const SizedBox(height: 24),
                     LogoutButton(),
                   ],
                 ),
@@ -145,10 +169,6 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: Colors.white.withValues(alpha: 0.1),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -170,24 +190,26 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
                     const Text(
-                      'Good morning ☀️',
+                      'Welcome, ',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 18,
                         color: Colors.white70,
                         fontWeight: FontWeight.w400,
+                        textBaseline: TextBaseline.alphabetic,
                       ),
                     ),
-                    const SizedBox(height: 4),
                     Text(
-                      userFirstName,
+                      "$userFirstName!",
                       style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
+                        textBaseline: TextBaseline.alphabetic,
                       ),
                     ),
                   ],
@@ -214,7 +236,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildPointsCard(int pointsBalance) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
@@ -244,88 +266,34 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Your Points',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Text(
+                        '$pointsBalance',
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
                         ),
+                        textAlign: TextAlign.left,
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFD700).withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              IconlyBold.star,
-                              color: Color(0xFFFFD700),
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '$pointsBalance',
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
-                      'Gold Status',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: const Icon(
+                      IconlyBold.star,
+                      color: Color(0xFFFFD700),
+                      size: 20,
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-                child: LinearProgressIndicator(
-                  value: 0.7,
-                  backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white.withValues(alpha: 0.8),
-                  ),
-                  minHeight: 8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '253 points to next reward',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w500,
-                ),
               ),
             ],
           ),
