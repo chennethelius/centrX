@@ -9,6 +9,7 @@ import 'pages/club_page.dart';
 import 'package:flutter_auth/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
     final user = AuthService().currentUser;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       home: user == null
           ? const NewLoginPage()
           : FutureBuilder<String?>(
