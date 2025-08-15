@@ -7,6 +7,7 @@ import 'dart:ui';
 import 'package:flutter_auth/components/bento_grid.dart';
 import 'package:flutter_auth/components/logout_button.dart';
 import 'package:flutter_auth/components/calendar_widget.dart';
+import 'package:flutter_auth/theme/theme_extensions.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -70,42 +71,31 @@ class _HomePageState extends State<HomePage> {
           final pointsBalance    = data['pointsBalance']    as int? ?? 0;
 
           return Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color.fromARGB(255, 126, 203, 255),
-                  Color(0xFF6366F1),
-                ],
-              ),
+            decoration: BoxDecoration(
+              gradient: context.backgroundGradient,
             ),
             child: SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(context.spacingXL),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 16),
+                    SizedBox(height: context.spacingL),
 
                     // Points label and card
-                    const Padding(
-                      padding: EdgeInsets.only(left: 16,),
+                    Padding(
+                      padding: EdgeInsets.only(left: context.spacingL),
                       child: Text(
                         'Points',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white70,
-                        ),
+                        style: context.theme.textTheme.headlineMedium,
                       ),
                     ),
                     _buildPointsCard(pointsBalance),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: context.spacingXXL),
                     if (user != null) ...[
-                      const SizedBox(height: 24),
+                      SizedBox(height: context.spacingXXL),
                       // Calendar flexibility test: calendar (3/4) + bento grid (1/4)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +104,7 @@ class _HomePageState extends State<HomePage> {
                           Expanded(
                             flex: 3,
                             child: Padding(
-                              padding: const EdgeInsets.only(right: 12),
+                              padding: EdgeInsets.only(right: context.spacingM),
                               child: const CalendarWidget(),
                             ),
                           ),
@@ -122,28 +112,28 @@ class _HomePageState extends State<HomePage> {
                           Expanded(
                             flex: 1,
                             child: BentoGrid(
-                              spacing: 8,
+                              spacing: context.spacingS,
                               items: [
                                 BentoItem(
                                   title: 'Today',
                                   value: '1',
                                   subtitle: '',
                                   icon: IconlyBold.calendar,
-                                  color: Colors.white,
+                                  color: context.primaryCyan,
                                 ),
                                 BentoItem(
                                   title: 'Scheduled',
                                   value: '3',
                                   subtitle: '',
                                   icon: IconlyBold.time_circle,
-                                  color: Colors.white,
+                                  color: context.theme.colorScheme.secondary,
                                 ),
                                 BentoItem(
                                   title: 'Completed',
                                   value: '0',
                                   subtitle: '',
                                   icon: IconlyBold.tick_square,
-                                  color: Colors.white,
+                                  color: context.accentGold,
                                 ),
                               ],
                             ),
@@ -151,7 +141,7 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ],
-                    const SizedBox(height: 24),
+                    SizedBox(height: context.spacingXXL),
                     LogoutButton(),
                   ],
                 ),
@@ -165,66 +155,59 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(context.spacingXL),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(context.radiusXXL),
+        color: context.glassWhite(0.1),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(context.radiusXXL),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(context.spacingM),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
+                  color: context.glassWhite(0.2),
+                  borderRadius: BorderRadius.circular(context.radiusL),
                 ),
-                child: const Icon(
+                child: Icon(
                   IconlyBold.profile,
                   color: Colors.white,
-                  size: 24,
+                  size: context.spacingXXL,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: context.spacingL),
               Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    const Text(
+                    Text(
                       'Welcome, ',
-                      style: TextStyle(
-                        fontSize: 18,
+                      style: context.theme.textTheme.headlineMedium?.copyWith(
                         color: Colors.white70,
                         fontWeight: FontWeight.w400,
-                        textBaseline: TextBaseline.alphabetic,
                       ),
                     ),
                     Text(
                       "$userFirstName!",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        textBaseline: TextBaseline.alphabetic,
-                      ),
+                      style: context.theme.textTheme.headlineLarge,
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(context.spacingS),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: context.glassWhite(0.2),
+                  borderRadius: BorderRadius.circular(context.radiusM),
                 ),
-                child: const Icon(
+                child: Icon(
                   IconlyBold.notification,
                   color: Colors.white,
-                  size: 20,
+                  size: context.spacingXL,
                 ),
               ),
             ],
