@@ -1,11 +1,11 @@
 // lib/widgets/event_card.dart
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import '../models/event.dart';
 import '../services/event_service.dart';
 import '../pages/event_details_page.dart';
+import '../theme/theme_extensions.dart';
 
 class EventCard extends StatelessWidget {
   final Event event;
@@ -32,7 +32,7 @@ class EventCard extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: context.errorRed)),
           ),
         ],
       ),
@@ -58,129 +58,140 @@ class EventCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => _openDetailsPage(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: EdgeInsets.only(bottom: context.spacingL),
+        decoration: BoxDecoration(
+          color: context.secondaryLight,
+          borderRadius: BorderRadius.circular(context.radiusL),
+          border: Border.all(
+            color: context.neutralGray,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: context.neutralGray.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Stack(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color.fromRGBO(255, 255, 255, 0.2),
-                        Color.fromRGBO(255, 255, 255, 0.1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                    border: Border.fromBorderSide(
-                      BorderSide(
-                        color: Color.fromRGBO(255, 255, 255, 0.3),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: EdgeInsets.all(context.spacingXL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              event.title,
+                      Expanded(
+                        child: Text(
+                          event.title,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: context.neutralBlack,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.spacingS,
+                          vertical: context.spacingXS,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.accentNavy,
+                          borderRadius: BorderRadius.circular(context.radiusM),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              IconlyBold.user_3,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            SizedBox(width: context.spacingXS),
+                            Text(
+                              '${event.rsvpList.length}',
                               style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: const BoxDecoration(
-                              color: Color.fromRGBO(255, 255, 255, 0.2),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(12)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.people_outline,
-                                    color: Colors.white, size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${event.rsvpList.length}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(Icons.calendar_today_outlined,
-                              color: Color.fromRGBO(255, 255, 255, 0.7),
-                              size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            // format as yyyy-MM-dd
-                            '${event.eventDate.toLocal()}'.split(' ')[0],
-                            style: const TextStyle(
-                              color: Color.fromRGBO(255, 255, 255, 0.8),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_outlined,
-                              color: Color.fromRGBO(255, 255, 255, 0.7),
-                              size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            event.location,
-                            style: const TextStyle(
-                              color: Color.fromRGBO(255, 255, 255, 0.8),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
+                  SizedBox(height: context.spacingM),
+                  Row(
+                    children: [
+                      Icon(
+                        IconlyBold.calendar,
+                        color: context.neutralMedium,
+                        size: 16,
+                      ),
+                      SizedBox(width: context.spacingS),
+                      Text(
+                        // format as yyyy-MM-dd
+                        '${event.eventDate.toLocal()}'.split(' ')[0],
+                        style: TextStyle(
+                          color: context.neutralDark,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: context.spacingS),
+                  Row(
+                    children: [
+                      Icon(
+                        IconlyBold.location,
+                        color: context.neutralMedium,
+                        size: 16,
+                      ),
+                      SizedBox(width: context.spacingS),
+                      Expanded(
+                        child: Text(
+                          event.location,
+                          style: TextStyle(
+                            color: context.neutralDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
-            // 🗑️ Trash Icon
+            // 🗑️ Delete Icon
             Positioned(
-              bottom: 12,
-              right: 12,
+              bottom: context.spacingM,
+              right: context.spacingM,
               child: GestureDetector(
                 onTap: () => _confirmAndDelete(context),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(context.spacingS),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.8),
+                    color: context.errorRed,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.errorRed.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.delete_outline,
+                  child: Icon(
+                    IconlyBold.delete,
                     color: Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
               ),

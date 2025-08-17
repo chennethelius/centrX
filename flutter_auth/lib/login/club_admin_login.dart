@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:iconly/iconly.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
 import 'package:flutter_auth/pages/club_page.dart';
-
+import '../theme/theme_extensions.dart';
+import '../theme/app_theme.dart';
 
 class ClubAdminLoginScreen extends StatefulWidget {
   const ClubAdminLoginScreen({super.key});
@@ -13,212 +14,275 @@ class ClubAdminLoginScreen extends StatefulWidget {
 }
 
 class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
-  final _usernameController = TextEditingController();  // holds the email
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-              Color(0xFFf093fb),
-            ],
+      backgroundColor: context.neutralWhite,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(
+            IconlyBold.arrow_left_2,
+            color: context.neutralBlack,
           ),
         ),
-        child: SafeArea(
+        title: Text(
+          'centrX',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: context.neutralBlack,
+            letterSpacing: -0.5,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(context.spacingXL),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // App Bar
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Text(
-                      'Club Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+              SizedBox(height: context.spacingXXL),
+              
+              // Login title
+              Text(
+                'Login',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: context.neutralBlack,
                 ),
               ),
-
-              Expanded(
-                child: Center(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color.fromRGBO(255, 255, 255, 0.25),
-                                Color.fromRGBO(255, 255, 255, 0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.all(Radius.circular(24)),
-                            border: Border.fromBorderSide(
-                              BorderSide(
-                                color: Color.fromRGBO(255, 255, 255, 0.3),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(32),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Icon
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: const BoxDecoration(
-                                  color: Color.fromRGBO(255, 255, 255, 0.2),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(20)),
-                                ),
-                                child: const Icon(
-                                  Icons.groups_outlined,
-                                  color: Colors.white,
-                                  size: 48,
-                                ),
-                              ),
-
-                              const SizedBox(height: 32),
-
-                              // Title
-                              const Text(
-                                'Club Portal',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              const Text(
-                                'Sign in to access your club dashboard',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color.fromRGBO(255, 255, 255, 0.8),
-                                ),
-                              ),
-
-                              const SizedBox(height: 40),
-
-                              // Username Field
-                              _buildTextField(
-                                controller: _usernameController,
-                                hintText: 'Email',
-                                prefixIcon: Icons.email_outlined,
-                              ),
-
-                              const SizedBox(height: 16),
-
-                              // Password Field
-                              _buildTextField(
-                                controller: _passwordController,
-                                hintText: 'Password',
-                                prefixIcon: Icons.lock_outline,
-                                isPassword: true,
-                              ),
-
-                              const SizedBox(height: 32),
-
-                              // Login Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: ElevatedButton(
-                                        onPressed: _isLoading
-                                            ? null
-                                            : () async {
-                                                setState(() => _isLoading = true);
-
-                                                final user = await AuthService().signInClubWithEmail(
-                                                  email: _usernameController.text.trim(),
-                                                  password: _passwordController.text,
-                                                );
-
-                                                setState(() => _isLoading = false);
-
-                                                if (user != null) {
-                                                  Navigator.pushReplacement(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) => ClubPage(),
-                                                    ),
-                                                  );
-                                                } else {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    const SnackBar(content: Text('Login failed')),
-                                                  );
-                                                }
-                                              },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.white,
-                                          foregroundColor: const Color.fromRGBO(66, 66, 66, 1.0),
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
-                                          ),
-                                        ),
-                                        child: _isLoading
-                                            ? const SizedBox(
-                                                width: 24,
-                                                height: 24,
-                                                child: CircularProgressIndicator(),
-                                              )
-                                            : const Text(
-                                                'Sign In',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                      ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+              
+              SizedBox(height: context.spacingXXL),
+              
+              // Email Field
+              _buildTextField(
+                controller: _emailController,
+                hintText: 'E-mail',
+                prefixIcon: IconlyBold.message,
+              ),
+              
+              SizedBox(height: context.spacingL),
+              
+              // Password Field
+              _buildTextField(
+                controller: _passwordController,
+                hintText: 'Password',
+                prefixIcon: IconlyBold.lock,
+                isPassword: true,
+              ),
+              
+              SizedBox(height: context.spacingS),
+              
+              // Forgot password link
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () {
+                    // Handle forgot password
+                  },
+                  child: Text(
+                    'forgot password?',
+                    style: context.theme.textTheme.bodySmall?.copyWith(
+                      color: context.neutralMedium,
                     ),
                   ),
                 ),
               ),
+              
+              SizedBox(height: context.spacingXXL),
+              
+              // Login Button
+              Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: context.accentNavy,
+                  borderRadius: BorderRadius.circular(context.radiusL),
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.accentNavy.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(context.radiusL),
+                    onTap: _isLoading ? null : () async {
+                      // Validate input
+                      if (_emailController.text.trim().isEmpty || 
+                          _passwordController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Please enter both email and password'),
+                            backgroundColor: AppTheme.errorRed,
+                          ),
+                        );
+                        return;
+                      }
+
+                      setState(() => _isLoading = true);
+
+                      try {
+                        final user = await AuthService().signInClubWithEmail(
+                          email: _emailController.text.trim(),
+                          password: _passwordController.text,
+                        );
+
+                        setState(() => _isLoading = false);
+
+                        if (user != null) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClubPage(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Login failed - please check your credentials'),
+                              backgroundColor: AppTheme.errorRed,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setState(() => _isLoading = false);
+                        
+                        String errorMessage = 'Login failed';
+                        if (e.toString().contains('invalid-credential')) {
+                          errorMessage = 'Invalid email or password. Please check your credentials.';
+                        } else if (e.toString().contains('user-not-found')) {
+                          errorMessage = 'No club account found with this email.';
+                        } else if (e.toString().contains('wrong-password')) {
+                          errorMessage = 'Incorrect password.';
+                        } else if (e.toString().contains('invalid-email')) {
+                          errorMessage = 'Please enter a valid email address.';
+                        } else if (e.toString().contains('too-many-requests')) {
+                          errorMessage = 'Too many failed attempts. Please try again later.';
+                        }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(errorMessage),
+                            backgroundColor: AppTheme.errorRed,
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    },
+                    child: Center(
+                      child: _isLoading
+                          ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              'Log In',
+                              style: context.theme.textTheme.bodyLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+              
+              const Spacer(),
+              
+              // Divider with "or log in with"
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: context.neutralGray,
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: context.spacingM),
+                    child: Text(
+                      'or log in with',
+                      style: context.theme.textTheme.bodySmall?.copyWith(
+                        color: context.neutralMedium,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: context.neutralGray,
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: context.spacingL),
+              
+              // Social login buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildSocialButton(Icons.g_mobiledata, 'Google'),
+                  _buildSocialButton(Icons.apple, 'Apple'),
+
+                ],
+              ),
+              
+              SizedBox(height: context.spacingXXL),
+              
+              // Sign up link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Don't have an account? ",
+                    style: context.theme.textTheme.bodyMedium?.copyWith(
+                      color: context.neutralMedium,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Sign up',
+                      style: context.theme.textTheme.bodyMedium?.copyWith(
+                        color: context.accentNavy,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: context.spacingL),
             ],
           ),
         ),
@@ -233,27 +297,26 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
     bool isPassword = false,
   }) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color.fromRGBO(255, 255, 255, 0.1),
-        borderRadius: BorderRadius.all(Radius.circular(16)),
-        border: Border.fromBorderSide(
-          BorderSide(
-            color: Color.fromRGBO(255, 255, 255, 0.3),
-            width: 1,
-          ),
+      height: 56,
+      decoration: BoxDecoration(
+        color: context.secondaryLight,
+        borderRadius: BorderRadius.circular(context.radiusL),
+        border: Border.all(
+          color: context.neutralGray,
+          width: 1,
         ),
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: context.neutralBlack),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle:
-              const TextStyle(color: Color.fromRGBO(255, 255, 255, 0.7)),
+          hintStyle: TextStyle(color: context.neutralMedium),
           prefixIcon: Icon(
             prefixIcon,
-            color: const Color.fromRGBO(255, 255, 255, 0.7),
+            color: context.neutralMedium,
+            size: 20,
           ),
           suffixIcon: isPassword
               ? IconButton(
@@ -261,14 +324,50 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
                       setState(() => _isPasswordVisible = !_isPasswordVisible),
                   icon: Icon(
                     _isPasswordVisible
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: const Color.fromRGBO(255, 255, 255, 0.7),
+                        ? IconlyBold.hide
+                        : IconlyBold.show,
+                    color: context.neutralMedium,
+                    size: 20,
                   ),
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: context.spacingL,
+            vertical: context.spacingL,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton(IconData icon, String platform) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: context.secondaryLight,
+        borderRadius: BorderRadius.circular(context.radiusL),
+        border: Border.all(
+          color: context.neutralGray,
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(context.radiusL),
+          onTap: () {
+            // Handle social login
+            if (platform == 'Google') {
+              // Handle Google login
+            }
+          },
+          child: Icon(
+            icon,
+            color: context.neutralDark,
+            size: 24,
+          ),
         ),
       ),
     );

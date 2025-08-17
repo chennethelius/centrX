@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:iconly/iconly.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
-import 'package:flutter_auth/components/google_login_button.dart';
 import 'package:flutter_auth/components/app_shell.dart';
+import '../theme/theme_extensions.dart';
 
 class StudentTeacherLoginScreen extends StatelessWidget {
   const StudentTeacherLoginScreen({super.key});
@@ -11,144 +11,122 @@ class StudentTeacherLoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-              Color(0xFFf093fb),
-            ],
+      backgroundColor: context.neutralWhite,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(
+            IconlyBold.arrow_left_2,
+            color: context.neutralBlack,
           ),
         ),
-        child: SafeArea(
+        title: Text(
+          'centrX',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: context.neutralBlack,
+            letterSpacing: -0.5,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(context.spacingXL),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // App Bar
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Text(
-                      'Student Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+              SizedBox(height: context.spacingXXL),
+              
+              // Login title
+              Text(
+                'Login',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: context.neutralBlack,
                 ),
               ),
               
-              Expanded(
-                child: Center(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color.fromRGBO(255, 255, 255, 0.25),
-                                Color.fromRGBO(255, 255, 255, 0.1),
-                              ],
+              SizedBox(height: context.spacingXXL * 2),
+              
+              // Google Sign In Button
+              Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: context.secondaryLight,
+                  borderRadius: BorderRadius.circular(context.radiusL),
+                  border: Border.all(
+                    color: context.neutralGray,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(context.radiusL),
+                    onTap: () async {
+                      // trigger the Google sign-in flow:
+                      final userCred = await AuthService().authenticateWithGoogle();
+                      // if successful, navigate to home; otherwise show an error:
+                      if (userCred != null) {
+                        // after successful login
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AppShell()),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                        );
+                      }
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: context.spacingL),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Google icon (you can replace with actual Google logo)
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: context.accentNavy,
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                            borderRadius: BorderRadius.all(Radius.circular(24)),
-                            border: Border.fromBorderSide(
-                              BorderSide(
-                                color: Color.fromRGBO(255, 255, 255, 0.3),
-                                width: 1,
-                              ),
+                            child: Icon(
+                              Icons.g_mobiledata,
+                              color: Colors.white,
+                              size: 16,
                             ),
                           ),
-                          padding: const EdgeInsets.all(32),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Icon
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: const BoxDecoration(
-                                  color: Color.fromRGBO(255, 255, 255, 0.2),
-                                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                                ),
-                                child: const Icon(
-                                  Icons.school_outlined,
-                                  color: Colors.white,
-                                  size: 48,
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 32),
-                              
-                              // Title
-                              const Text(
-                                'Sign in with Google',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 12),
-                              
-                              const Text(
-                                'Use your institutional Google account to access the platform',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color.fromRGBO(255, 255, 255, 0.8),
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 40),
-                              
-                              
-                              // Google Sign In Button
-                              GoogleLoginButton(
-                        icon: Icons.g_mobiledata,
-                        label: 'Google',
-                        onPressed: () async {
-                          // trigger the Google sign-in flow:
-                          final userCred = await AuthService().authenticateWithGoogle();
-                          // if successful, navigate to home; otherwise show an error:
-                          if (userCred != null) {
-                            // after successful login
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => const AppShell()),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Google sign-in failed or cancelled')),
-                            );
-                          }
-                        },
-                      ),
-                            ],
+                          SizedBox(width: context.spacingM),
+                          Text(
+                            'Continue with Google',
+                            style: context.theme.textTheme.bodyLarge?.copyWith(
+                              color: context.neutralBlack,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
+              
+              const Spacer(),
             ],
           ),
         ),
