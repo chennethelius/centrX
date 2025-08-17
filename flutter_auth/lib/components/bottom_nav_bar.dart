@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:crystal_navigation_bar/crystal_navigation_bar.dart';
 import 'package:iconly/iconly.dart';
+import '../theme/theme_extensions.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -21,27 +22,27 @@ class BottomNavBar extends StatelessWidget {
         CrystalNavigationBarItem(
           icon: IconlyBold.home,
           unselectedIcon: IconlyLight.home,
-          selectedColor: Colors.white,
+          selectedColor: context.accentNavy,
         ),
         CrystalNavigationBarItem(
           icon: IconlyBold.calendar,
           unselectedIcon: IconlyLight.calendar,
-          selectedColor: Colors.red.withValues(alpha: 0.7),
+          selectedColor: context.errorRed,
         ),
         CrystalNavigationBarItem(
           icon: IconlyBold.star,
           unselectedIcon: IconlyLight.star,
-          selectedColor: const Color.fromARGB(255, 102, 201, 247),
+          selectedColor: context.infoBlue,
         ),
         CrystalNavigationBarItem(
           icon: IconlyBold.scan,
           unselectedIcon: IconlyBold.scan,
-          selectedColor: Colors.yellow,
+          selectedColor: context.warningOrange,
         ),
       ],
-      backgroundColor: Colors.black.withValues(alpha: 0.3),
-      unselectedItemColor: Colors.white70,
-      outlineBorderColor: Colors.white,
+      backgroundColor: context.neutralBlack.withValues(alpha: 0.3),
+      unselectedItemColor: context.neutralMedium,
+      outlineBorderColor: context.neutralGray,
       borderWidth: 2,
     );
   }

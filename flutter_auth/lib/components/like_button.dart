@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../theme/theme_extensions.dart';
 
 //TODO: like animation, double-tap screen to like
 
@@ -21,10 +22,10 @@ class LikeButton extends StatelessWidget {
         // default UI while loading or missing
         if (!snap.hasData || !snap.data!.exists) {
           return Column(
-            children: const [
-              Icon(IconlyBold.heart, size: 30, color: Colors.white),
+            children: [
+              Icon(IconlyBold.heart, size: 30, color: context.neutralMedium),
               SizedBox(height: 4),
-              Text('0', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text('0', style: TextStyle(color: context.neutralMedium, fontSize: 12)),
             ],
           );
         }
@@ -36,25 +37,33 @@ class LikeButton extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            
             FirebaseFirestore.instance.runTransaction((tx) async {
               final fresh = await tx.get(docRef);
-              final map   = fresh.data()!;
+              if (!fresh.exists) return;
+              
+              final map = fresh.data()! as Map<String, dynamic>;
               final currentLikes = (map['likeCount'] as int?) ?? 0;
+              final currentLikedBy = List<String>.from(map['likedBy'] as List? ?? []);
+              final isCurrentlyLiked = currentLikedBy.contains(uid);
 
-              if (isLiked) {
-                // unlike
-                tx.update(docRef, {
-                  'likeCount': currentLikes - 1,
-                  'likedBy': FieldValue.arrayRemove([uid]),
-                });
+              if (isCurrentlyLiked) {
+                // Unlike: only proceed if count > 0 to prevent negatives
+                if (currentLikes > 0) {
+                  tx.update(docRef, {
+                    'likeCount': currentLikes - 1,
+                    'likedBy': FieldValue.arrayRemove([uid]),
+                  });
+                }
               } else {
-                // like
+                // Like: safe to increment
                 tx.update(docRef, {
                   'likeCount': currentLikes + 1,
                   'likedBy': FieldValue.arrayUnion([uid]),
                 });
               }
+            }).catchError((error) {
+              // Handle any transaction errors silently
+              debugPrint('Like button transaction error: $error');
             });
           },
           child: Container(
@@ -73,12 +82,12 @@ class LikeButton extends StatelessWidget {
                 Icon(
                   IconlyBold.heart,
                   size: 38,
-                  color: isLiked ? Colors.red : Colors.white,
+                  color: isLiked ? context.errorRed : context.surfaceWhite,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '$likeCount',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: context.surfaceWhite, fontSize: 12),
                 ),
               ],
             ),

@@ -1,113 +1,146 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Core Colors
-  static const Color primaryBlue = Color(0xFF6366F1);
-  static const Color primaryCyan = Color(0xFF06B6D4);
-  static const Color lightBlue = Color.fromARGB(255, 126, 203, 255);
-  static const Color accentGold = Color(0xFFFFD700);
+  // 60-30-10 Color Palette Design
   
-  // Surface Colors (for glassmorphism)
-  static const Color surfaceWhite = Colors.white;
-  static const Color surfaceBlack = Colors.black;
+  // Primary Colors (60% - Neutral Base)
+  static const Color neutralWhite = Color(0xFFFAFAFA);      // Main background
+  static const Color neutralLight = Color(0xFFF5F5F5);      // Secondary backgrounds
+  static const Color neutralGray = Color(0xFFE5E5E5);       // Borders, dividers
+  static const Color neutralMedium = Color(0xFF9E9E9E);     // Placeholder text
+  static const Color neutralDark = Color(0xFF424242);       // Body text
+  static const Color neutralBlack = Color(0xFF212121);      // Headings
   
-  // Status Colors
-  static const Color successGreen = Colors.green;
-  static const Color warningOrange = Colors.orange;
-  static const Color errorRed = Colors.red;
-  static const Color infoBlue = Colors.blue;
-  static const Color purpleAccent = Colors.purple;
-
-  // Gradients
+  // Secondary Colors (30% - Supporting Neutrals)
+  static const Color secondaryLight = Color(0xFFF8F9FA);    // Card backgrounds
+  static const Color secondaryGray = Color(0xFFDEE2E6);     // Input backgrounds
+  static const Color secondaryDark = Color(0xFF6C757D);     // Secondary text
+  
+  // Accent Color (10% - Navy)
+  static const Color accentNavy = Color(0xFF1E3A8A);        // Primary actions, buttons
+  static const Color accentNavyLight = Color(0xFF3B82F6);   // Hover states
+  static const Color accentNavyDark = Color(0xFF1E40AF);    // Active states
+  
+  // Status Colors (minimal usage)
+  static const Color successGreen = Color(0xFF10B981);
+  static const Color warningOrange = Color(0xFFF59E0B);
+  static const Color errorRed = Color(0xFFEF4444);
+  static const Color infoBlue = Color(0xFF3B82F6);
+  
+  // Surface Colors
+  static const Color surfaceWhite = neutralWhite;
+  static const Color surfaceCard = secondaryLight;
+  
+  // Gradient Combinations - Minimal and clean
   static const LinearGradient backgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [lightBlue, primaryBlue],
+    colors: [
+      neutralWhite,
+      neutralLight,
+    ],
+  );
+  
+  static const LinearGradient cardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      secondaryLight,
+      neutralLight,
+    ],
+  );
+  
+  static const LinearGradient accentGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      accentNavy,
+      accentNavyLight,
+    ],
   );
 
-  static LinearGradient glassmorphismGradient({double opacity1 = 0.25, double opacity2 = 0.1}) {
-    return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        surfaceWhite.withValues(alpha: opacity1),
-        surfaceWhite.withValues(alpha: opacity2),
-      ],
-    );
-  }
+  // Primary surface colors for cards and containers
+  static Color get primarySurface => accentNavy;
+  static Color get secondarySurface => secondaryLight;
+  static Color get tertiarySurface => neutralGray;
+  
+  // Surface variations with opacity
+  static Color primarySurfaceWithOpacity(double opacity) => accentNavy.withValues(alpha: opacity);
+  static Color secondarySurfaceWithOpacity(double opacity) => secondaryLight.withValues(alpha: opacity);
+  static Color tertiarySurfaceWithOpacity(double opacity) => neutralGray.withValues(alpha: opacity);
 
   // Glass effect colors with different opacities
   static Color glassWhite(double opacity) => surfaceWhite.withValues(alpha: opacity);
-  static Color glassBlack(double opacity) => surfaceBlack.withValues(alpha: opacity);
+  static Color glassBlack(double opacity) => neutralDark.withValues(alpha: opacity);
 
-  // Typography Scale (using default fonts for now)
+  // Typography Scale (using neutral colors)
   static const TextTheme textTheme = TextTheme(
     // Display styles
     displayLarge: TextStyle(
       fontSize: 32,
       fontWeight: FontWeight.w800,
-      color: surfaceWhite,
+      color: neutralBlack,
     ),
     displayMedium: TextStyle(
       fontSize: 28,
       fontWeight: FontWeight.w800,
-      color: surfaceWhite,
+      color: neutralBlack,
     ),
     displaySmall: TextStyle(
       fontSize: 24,
       fontWeight: FontWeight.w700,
-      color: surfaceWhite,
+      color: neutralBlack,
     ),
     
     // Heading styles
     headlineLarge: TextStyle(
       fontSize: 22,
       fontWeight: FontWeight.w700,
-      color: surfaceWhite,
+      color: neutralBlack,
     ),
     headlineMedium: TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w600,
-      color: surfaceWhite,
+      color: neutralDark,
     ),
     headlineSmall: TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w600,
-      color: surfaceWhite,
+      color: neutralDark,
     ),
     
     // Body styles
     bodyLarge: TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w400,
-      color: surfaceWhite,
+      color: neutralDark,
     ),
     bodyMedium: TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w400,
-      color: surfaceWhite,
+      color: neutralDark,
     ),
     bodySmall: TextStyle(
       fontSize: 12,
       fontWeight: FontWeight.w400,
-      color: Color(0xB3FFFFFF), // surfaceWhite with 70% opacity
+      color: neutralMedium,
     ),
     
     // Label styles
     labelLarge: TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w600,
-      color: surfaceWhite,
+      color: neutralDark,
     ),
     labelMedium: TextStyle(
       fontSize: 12,
       fontWeight: FontWeight.w500,
-      color: Color(0xB3FFFFFF), // surfaceWhite with 70% opacity
+      color: neutralMedium,
     ),
     labelSmall: TextStyle(
       fontSize: 10,
       fontWeight: FontWeight.w400,
-      color: Color(0xB3FFFFFF), // surfaceWhite with 70% opacity
+      color: neutralMedium,
     ),
   );
 
@@ -132,7 +165,7 @@ class AppTheme {
   // Elevation/Shadow Scale
   static List<BoxShadow> getShadow({
     required String level,
-    Color color = surfaceBlack,
+    Color color = neutralDark,
     double opacity = 0.1,
   }) {
     switch (level) {
@@ -169,11 +202,11 @@ class AppTheme {
   static ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlue,
+      seedColor: accentNavy,
       brightness: Brightness.light,
-      primary: primaryBlue,
-      secondary: primaryCyan,
-      tertiary: accentGold,
+      primary: accentNavy,
+      secondary: secondaryGray,
+      tertiary: accentNavyLight,
       surface: surfaceWhite,
       error: errorRed,
     ),
@@ -186,9 +219,9 @@ class AppTheme {
       titleTextStyle: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        color: surfaceWhite,
+        color: neutralBlack,
       ),
-      iconTheme: IconThemeData(color: surfaceWhite),
+      iconTheme: IconThemeData(color: neutralBlack),
     ),
     
     // Card Theme
@@ -197,13 +230,13 @@ class AppTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusXXL),
       ),
-      color: Colors.transparent,
+      color: surfaceCard,
     ),
     
     // Button Themes
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryBlue,
+        backgroundColor: accentNavy,
         foregroundColor: surfaceWhite,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -218,7 +251,7 @@ class AppTheme {
     
     // Icon Theme
     iconTheme: const IconThemeData(
-      color: surfaceWhite,
+      color: neutralDark,
       size: 24,
     ),
   );
@@ -226,46 +259,8 @@ class AppTheme {
   // Dark theme for future use
   static ThemeData get darkTheme => lightTheme.copyWith(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlue,
+      seedColor: accentNavy,
       brightness: Brightness.dark,
     ),
   );
-}
-
-// Extension for easy access to theme values
-extension AppThemeExtension on ThemeData {
-  // Quick access to custom colors
-  Color get primaryBlue => AppTheme.primaryBlue;
-  Color get primaryCyan => AppTheme.primaryCyan;
-  Color get lightBlue => AppTheme.lightBlue;
-  Color get accentGold => AppTheme.accentGold;
-  
-  // Quick access to glassmorphism helpers
-  Color glassWhite(double opacity) => AppTheme.glassWhite(opacity);
-  Color glassBlack(double opacity) => AppTheme.glassBlack(opacity);
-  LinearGradient get backgroundGradient => AppTheme.backgroundGradient;
-  LinearGradient glassmorphismGradient({double opacity1 = 0.25, double opacity2 = 0.1}) =>
-      AppTheme.glassmorphismGradient(opacity1: opacity1, opacity2: opacity2);
-  
-  // Quick access to spacing
-  double get spacingXS => AppTheme.spacingXS;
-  double get spacingS => AppTheme.spacingS;
-  double get spacingM => AppTheme.spacingM;
-  double get spacingL => AppTheme.spacingL;
-  double get spacingXL => AppTheme.spacingXL;
-  double get spacingXXL => AppTheme.spacingXXL;
-  double get spacingHuge => AppTheme.spacingHuge;
-  
-  // Quick access to radius
-  double get radiusXS => AppTheme.radiusXS;
-  double get radiusS => AppTheme.radiusS;
-  double get radiusM => AppTheme.radiusM;
-  double get radiusL => AppTheme.radiusL;
-  double get radiusXL => AppTheme.radiusXL;
-  double get radiusXXL => AppTheme.radiusXXL;
-  double get radiusHuge => AppTheme.radiusHuge;
-  
-  // Quick access to shadows
-  List<BoxShadow> getShadow({required String level, Color? color, double? opacity}) =>
-      AppTheme.getShadow(level: level, color: color ?? Colors.black, opacity: opacity ?? 0.1);
 }
