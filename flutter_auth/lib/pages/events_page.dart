@@ -3,7 +3,6 @@ import 'package:video_player/video_player.dart';
 import '../components/video_overlay.dart';
 import '../services/social_button_services.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
@@ -141,10 +140,12 @@ class _EventsPageState extends State<EventsPage> {
           return GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {
-                // toggle play/pause
-                controller.value.isPlaying
-                  ? controller.pause()
-                  : controller.play();
+                setState(() {
+                  // toggle play/pause
+                  controller.value.isPlaying
+                    ? controller.pause()
+                    : controller.play();
+                });
               },
             child: Stack(
               children: [
@@ -171,6 +172,14 @@ class _EventsPageState extends State<EventsPage> {
                   likeCount: likeCount,
                   commentCount: commentCount,
                   onCommentTap:() => (SocialButtonServices.showComments(context, eventId)),
+                  isPlaying: controller.value.isPlaying,
+                  onPlayPauseTap: () {
+                    setState(() {
+                      controller.value.isPlaying
+                        ? controller.pause()
+                        : controller.play();
+                    });
+                  },
                 ),
               ],
             ),
