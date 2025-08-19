@@ -31,16 +31,6 @@ class NewLoginPage extends StatelessWidget {
               
               const Spacer(flex: 1),
               
-              // Sign up text
-              Text(
-                'Sign up',
-                style: context.theme.textTheme.bodyMedium?.copyWith(
-                  color: context.neutralMedium,
-                ),
-              ),
-              
-              SizedBox(height: context.spacingL),
-              
               // Welcome title
               Text(
                 'Welcome!',
@@ -56,7 +46,7 @@ class NewLoginPage extends StatelessWidget {
               
               // Subtitle
               Text(
-                'Are you signing up as a',
+                'Are you joining as a',
                 style: context.theme.textTheme.bodyMedium?.copyWith(
                   color: context.neutralMedium,
                 ),
@@ -112,37 +102,6 @@ class NewLoginPage extends StatelessWidget {
               ),
               
               const Spacer(flex: 3),
-              
-              // Login link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Have an account? ',
-                    style: context.theme.textTheme.bodyMedium?.copyWith(
-                      color: context.neutralMedium,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      // Navigate to club login as it has the manual login
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ClubAdminLoginScreen(),
-                        ),
-                      );
-                    },
-                    child: Text(
-                      'Log in',
-                      style: context.theme.textTheme.bodyMedium?.copyWith(
-                        color: context.accentNavy,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               
               SizedBox(height: context.spacingXL),
             ],

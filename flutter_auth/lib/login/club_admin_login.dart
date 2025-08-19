@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
-import 'package:flutter_auth/pages/club_page.dart';
 import '../theme/theme_extensions.dart';
 import '../theme/app_theme.dart';
 
@@ -30,6 +29,7 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.neutralWhite,
+      resizeToAvoidBottomInset: true, // Automatically resize when keyboard appears
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -52,7 +52,7 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(context.spacingXL),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,66 +108,50 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
               
               SizedBox(height: context.spacingXXL),
               
-              // Login Button
+              // Log In Button
               Container(
                 width: double.infinity,
-                height: 56,
+                height: 50,
                 decoration: BoxDecoration(
                   color: context.accentNavy,
                   borderRadius: BorderRadius.circular(context.radiusL),
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.accentNavy.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(context.radiusL),
-                    onTap: _isLoading ? null : () async {
-                      // Validate input
-                      if (_emailController.text.trim().isEmpty || 
-                          _passwordController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Please enter both email and password'),
-                            backgroundColor: AppTheme.errorRed,
-                          ),
+                child: TextButton(
+                  onPressed: _isLoading ? null : () async {
+                    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Please fill in all fields'),
+                          backgroundColor: AppTheme.errorRed,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    try {
+                      await AuthService().signInClubWithEmail(
+                        email: _emailController.text.trim(),
+                        password: _passwordController.text,
+                      );
+                      
+                      if (mounted) {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/club_home',
+                          (route) => false,
                         );
-                        return;
                       }
+                    } catch (e) {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
 
-                      setState(() => _isLoading = true);
-
-                      try {
-                        final user = await AuthService().signInClubWithEmail(
-                          email: _emailController.text.trim(),
-                          password: _passwordController.text,
-                        );
-
-                        setState(() => _isLoading = false);
-
-                        if (user != null) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ClubPage(),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Login failed - please check your credentials'),
-                              backgroundColor: AppTheme.errorRed,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        setState(() => _isLoading = false);
-                        
                         String errorMessage = 'Login failed';
                         if (e.toString().contains('invalid-credential')) {
                           errorMessage = 'Invalid email or password. Please check your credentials.';
@@ -189,73 +173,33 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
                           ),
                         );
                       }
-                    },
-                    child: Center(
-                      child: _isLoading
-                          ? SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : Text(
-                              'Log In',
-                              style: context.theme.textTheme.bodyLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                    }
+                  },
+                  child: Center(
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
                               ),
                             ),
-                    ),
+                          )
+                        : Text(
+                            'Log In',
+                            style: context.theme.textTheme.bodyLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
               ),
               
-              const Spacer(),
-              
-              // Divider with "or log in with"
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      color: context.neutralGray,
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: context.spacingM),
-                    child: Text(
-                      'or log in with',
-                      style: context.theme.textTheme.bodySmall?.copyWith(
-                        color: context.neutralMedium,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      color: context.neutralGray,
-                    ),
-                  ),
-                ],
-              ),
-              
-              SizedBox(height: context.spacingL),
-              
-              // Social login buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildSocialButton(Icons.g_mobiledata, 'Google'),
-                  _buildSocialButton(Icons.apple, 'Apple'),
+              SizedBox(height: context.spacingXXL * 2),
 
-                ],
-              ),
-              
-              SizedBox(height: context.spacingXXL),
               
               // Sign up link
               Row(
@@ -309,10 +253,12 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
       child: TextField(
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
-        style: TextStyle(color: context.neutralBlack),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: context.neutralMedium),
+          hintStyle: TextStyle(
+            color: context.neutralMedium,
+            fontSize: 16,
+          ),
           prefixIcon: Icon(
             prefixIcon,
             color: context.neutralMedium,
@@ -320,22 +266,27 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
           ),
           suffixIcon: isPassword
               ? IconButton(
-                  onPressed: () =>
-                      setState(() => _isPasswordVisible = !_isPasswordVisible),
                   icon: Icon(
-                    _isPasswordVisible
-                        ? IconlyBold.hide
-                        : IconlyBold.show,
+                    _isPasswordVisible ? IconlyBold.show : IconlyBold.hide,
                     color: context.neutralMedium,
                     size: 20,
                   ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
                 )
               : null,
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
-            horizontal: context.spacingL,
-            vertical: context.spacingL,
+            horizontal: context.spacingM,
+            vertical: context.spacingM,
           ),
+        ),
+        style: TextStyle(
+          color: context.neutralBlack,
+          fontSize: 16,
         ),
       ),
     );
@@ -343,31 +294,24 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
 
   Widget _buildSocialButton(IconData icon, String platform) {
     return Container(
-      width: 56,
-      height: 56,
+      width: 50,
+      height: 50,
       decoration: BoxDecoration(
-        color: context.secondaryLight,
+        color: context.neutralWhite,
         borderRadius: BorderRadius.circular(context.radiusL),
         border: Border.all(
           color: context.neutralGray,
           width: 1,
         ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(context.radiusL),
-          onTap: () {
-            // Handle social login
-            if (platform == 'Google') {
-              // Handle Google login
-            }
-          },
-          child: Icon(
-            icon,
-            color: context.neutralDark,
-            size: 24,
-          ),
+      child: IconButton(
+        onPressed: () {
+          // Handle social login
+        },
+        icon: Icon(
+          icon,
+          color: context.neutralBlack,
+          size: 24,
         ),
       ),
     );
