@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter_auth/services/auth_service.dart';
 import '../theme/theme_extensions.dart';
 import '../theme/app_theme.dart';
+import '../pages/club_page.dart';
 
 class ClubAdminLoginScreen extends StatefulWidget {
   const ClubAdminLoginScreen({super.key});
@@ -140,9 +141,9 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
                       );
                       
                       if (mounted) {
-                        Navigator.pushNamedAndRemoveUntil(
+                        Navigator.pushAndRemoveUntil(
                           context,
-                          '/club_home',
+                          MaterialPageRoute(builder: (context) => const ClubPage()),
                           (route) => false,
                         );
                       }
@@ -152,7 +153,7 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
                           _isLoading = false;
                         });
 
-                        String errorMessage = 'Login failed';
+                        String errorMessage = 'Login failed: $e';
                         if (e.toString().contains('invalid-credential')) {
                           errorMessage = 'Invalid email or password. Please check your credentials.';
                         } else if (e.toString().contains('user-not-found')) {
