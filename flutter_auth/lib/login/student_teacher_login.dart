@@ -79,12 +79,13 @@ class StudentTeacherLoginScreen extends StatelessWidget {
                     onTap: () async {
                       // trigger the Google sign-in flow:
                       final userCred = await AuthService().authenticateWithGoogle();
+                      // Ensure the context is still mounted before navigation/snackbar.
+                      if (!context.mounted) return;
                       // if successful, navigate to home; otherwise show an error:
                       if (userCred != null) {
-                        // after successful login
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const AppShell()),
+                          MaterialPageRoute(builder: (context) => const AppShell()),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(

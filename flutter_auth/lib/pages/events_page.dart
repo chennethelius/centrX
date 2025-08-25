@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../components/video_overlay.dart';
 import '../services/social_button_services.dart';
+import '../services/video_cache_service.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
@@ -16,17 +17,29 @@ class EventsPage extends StatefulWidget {
 
 class _EventsPageState extends State<EventsPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final PageController _pageController = PageController();
+  late final PageController _pageController;
   late final StreamSubscription<QuerySnapshot> _eventSub;
 
   // Keep both the raw docs and the player controllers
   final List<QueryDocumentSnapshot> _mediaDocs = [];
-  final List<VideoPlayerController> _videoControllers = [];
-  List<String> _videoUrls = []; 
+  // We keep only the URLs and fetch controllers from the pool.
+  List<String> _videoUrls = [];
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
+  final savedIndex = VideoControllerPool.instance.lastIndex ?? 0;
+  _currentIndex = savedIndex;
+  _pageController = PageController(initialPage: savedIndex);
+    // After first frame, if saved index differs from controller's page, try to jump.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final idx = (VideoControllerPool.instance.lastIndex ?? 0);
+      if (_pageController.hasClients && _pageController.page?.round() != idx) {
+        _pageController.jumpToPage(idx);
+      }
+    });
     // Listen to /media and rebuild on every change
     _eventSub = _firestore
         .collection('events')
@@ -56,42 +69,37 @@ class _EventsPageState extends State<EventsPage> {
 
 
   void _rebuildControllers(List<String> urls) {
-  // 1) Tear down old controllers
-  for (var c in _videoControllers) {
-    c.pause();
-    c.dispose();
+    // Prefetch new URLs into the pool; let the UI bind lazily.
+    VideoControllerPool.instance.prefetch(urls);
+    if (!mounted) return;
+    setState(() {});
+    // Auto-play the first item if present.
+    if (urls.isNotEmpty) {
+      // Determine which url to activate: saved last or first.
+      final initialIndex = (VideoControllerPool.instance.lastIndex ?? 0)
+          .clamp(0, urls.length - 1);
+      final initialUrl = urls[initialIndex];
+      VideoControllerPool.instance.lastIndex = initialIndex;
+      VideoControllerPool.instance.lastUrl = initialUrl;
+      VideoControllerPool.instance.makeSticky(initialUrl);
+      VideoControllerPool.instance.getController(initialUrl).then((c) {
+        if (!mounted) return;
+        // Always start from beginning when (re)activating within the feed
+        c.pause();
+        c.seekTo(Duration.zero);
+        c.play();
+        // Pause the rest just in case some were warm already.
+        VideoControllerPool.instance.pauseAllExcept(initialUrl);
+      });
+    }
   }
-  _videoControllers.clear();
-
-  // 2) Build new controllers
-  for (var url in urls) {
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url))
-      ..setLooping(true);
-
-    controller.initialize().then((_) {
-      // Only update UI if still in the tree
-      if (!mounted) return;
-
-      // Auto‑play the first video
-      if (_videoControllers.isEmpty) {
-        controller.play();
-      }
-      setState(() {});
-    });
-
-    _videoControllers.add(controller);
-  }
-  // 3) Trigger a rebuild so PageView picks up the new length
-  if (!mounted) return;
-  setState(() {});
-}
 
 
   @override
   void dispose() {
-    for (var c in _videoControllers) {
-      c.dispose();
-    }
+  // Keep only the current one hot, pause it, dispose the rest.
+  unawaited(VideoControllerPool.instance.pauseSticky());
+  unawaited(VideoControllerPool.instance.disposeNonSticky());
     _eventSub.cancel(); 
     _pageController.dispose();
     super.dispose();
@@ -100,7 +108,7 @@ class _EventsPageState extends State<EventsPage> {
   @override
   Widget build(BuildContext context) {
     // show spinner until we have both docs and controllers
-    if (_mediaDocs.isEmpty || _videoControllers.isEmpty) {
+  if (_mediaDocs.isEmpty || _videoUrls.isEmpty) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
@@ -112,16 +120,37 @@ class _EventsPageState extends State<EventsPage> {
       body: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
-        itemCount: _videoControllers.length,
+        itemCount: _videoUrls.length,
         onPageChanged: (index) {
-          // pause all except the current one
-          for (var c in _videoControllers) {
-            c.pause();
+          final prev = _currentIndex;
+          _currentIndex = index;
+          if (index < 0 || index >= _videoUrls.length) return;
+          final activeUrl = _videoUrls[index];
+          VideoControllerPool.instance.lastIndex = index;
+          VideoControllerPool.instance.lastUrl = activeUrl;
+          VideoControllerPool.instance.makeSticky(activeUrl);
+          VideoControllerPool.instance.pauseAllExcept(activeUrl);
+
+          // Reset previous page so revisiting starts from 0
+          if (prev >= 0 && prev < _videoUrls.length) {
+            final prevUrl = _videoUrls[prev];
+            final prevCtrl = VideoControllerPool.instance.lookup(prevUrl);
+            if (prevCtrl != null) {
+              prevCtrl.pause();
+              prevCtrl.seekTo(Duration.zero);
+            }
           }
-          _videoControllers[index].play();
+
+          // Start the active one from the beginning
+          VideoControllerPool.instance.getController(activeUrl).then((c) {
+            if (!mounted) return;
+            c.pause();
+            c.seekTo(Duration.zero);
+            c.play();
+          });
         },
         itemBuilder: (context, index) {
-          final controller = _videoControllers[index];
+          final url = _videoUrls[index];
           final data = _mediaDocs[index].data() as Map<String, dynamic>;
 
           // Extract the overlay fields from your media doc:
@@ -137,53 +166,66 @@ class _EventsPageState extends State<EventsPage> {
           final attendance = List<String>.from(data['attendanceList'] as List<dynamic>? ?? []);
           final currentUserId = FirebaseAuth.instance.currentUser?.uid;
           final isRsvped = currentUserId != null && attendance.contains(currentUserId);*/
-          return GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () {
-                setState(() {
-                  // toggle play/pause
-                  controller.value.isPlaying
-                    ? controller.pause()
-                    : controller.play();
-                });
-              },
-            child: Stack(
-              children: [
-                // 1) Letterboxed, centered video
-                Container(
-                  color: Colors.black,
-                  child: Center(
-                    child: controller.value.isInitialized
-                        ? AspectRatio(
-                            aspectRatio: controller.value.aspectRatio,
-                            child: VideoPlayer(controller),
-                          )
-                        : const CircularProgressIndicator(),
-                  ),
-                ),
-            
-                // 2) Simple overlay at bottom
-                VideoOverlay(
-                  eventId: eventId,
-                  clubId: clubId,
-                  title:    title,
-                  description: desc,
-                  location:    location,
-                  likeCount: likeCount,
-                  commentCount: commentCount,
-                  onCommentTap:() => (SocialButtonServices.showComments(context, eventId)),
-                  isPlaying: controller.value.isPlaying,
-                  onPlayPauseTap: () {
-                    setState(() {
-                      controller.value.isPlaying
-                        ? controller.pause()
-                        : controller.play();
-                    });
+          return FutureBuilder<VideoPlayerController>(
+              future: VideoControllerPool.instance.getController(url),
+              builder: (context, snapshot) {
+                final controller = snapshot.data;
+                final isReady = controller != null && controller.value.isInitialized;
+                return GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () {
+                    final c = controller;
+                    if (c == null) return;
+                    c.value.isPlaying ? c.pause() : c.play();
                   },
-                ),
-              ],
-            ),
-          );
+                  child: isReady
+                      ? ValueListenableBuilder<VideoPlayerValue>(
+                          valueListenable: controller,
+                          builder: (context, value, _) {
+                            return Stack(
+                              children: [
+                                // 1) Letterboxed, centered video
+                                Container(
+                                  color: Colors.black,
+                                  child: Center(
+                                    child: AspectRatio(
+                                      aspectRatio: value.aspectRatio,
+                                      child: VideoPlayer(controller),
+                                    ),
+                                  ),
+                                ),
+                                // 2) Simple overlay at bottom
+                                VideoOverlay(
+                                  eventId: eventId,
+                                  clubId: clubId,
+                                  title: title,
+                                  description: desc,
+                                  location: location,
+                                  likeCount: likeCount,
+                                  commentCount: commentCount,
+                                  onCommentTap: () => (SocialButtonServices.showComments(context, eventId)),
+                                  isPlaying: value.isPlaying,
+                                  onPlayPauseTap: () {
+                                    value.isPlaying ? controller.pause() : controller.play();
+                                  },
+                                  position: value.position,
+                                  totalDuration: value.duration,
+                                  onSeek: (to) {
+                                    controller.seekTo(to);
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        )
+                      : const Stack(
+                          children: [
+                            Center(child: CircularProgressIndicator()),
+                          ],
+                        ),
+                );
+              },
+            );
         },
       ),
     );

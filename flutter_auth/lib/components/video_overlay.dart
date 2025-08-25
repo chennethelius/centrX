@@ -15,6 +15,10 @@ class VideoOverlay extends StatelessWidget {
   final VoidCallback onCommentTap;
   final bool isPlaying;
   final VoidCallback onPlayPauseTap;
+  // Mini controller inputs
+  final Duration position;
+  final Duration totalDuration;
+  final ValueChanged<Duration> onSeek;
 
   const VideoOverlay({
     Key? key,
@@ -28,6 +32,9 @@ class VideoOverlay extends StatelessWidget {
     required this.onCommentTap,
     required this.isPlaying,
     required this.onPlayPauseTap,
+  required this.position,
+  required this.totalDuration,
+  required this.onSeek,
   }) : super(key: key);
 
   @override
@@ -42,7 +49,7 @@ class VideoOverlay extends StatelessWidget {
     final bottomOffset = height * 0.12; // 12% from bottom
     final actionButtonsOffset = height * 0.45; // 45% from top
     
-    return Stack(
+  return Stack(
       children: [
         // Center play icon
         Positioned.fill(
@@ -176,7 +183,69 @@ class VideoOverlay extends StatelessWidget {
             ],
           ),
         ),
+
+  // Bottom mini controller (TikTok-style)
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: height * 0.075,
+          child: _MiniController(
+            position: position,
+            total: totalDuration,
+            onSeek: onSeek,
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _MiniController extends StatelessWidget {
+  const _MiniController({
+    required this.position,
+    required this.total,
+    required this.onSeek,
+  });
+
+  final Duration position;
+  final Duration total;
+  final ValueChanged<Duration> onSeek;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalMs = total.inMilliseconds;
+    final posMs = position.inMilliseconds.clamp(0, totalMs == 0 ? 1 : totalMs);
+    final canScrub = totalMs > 0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      // Transparent background for a cleaner, TikTok-like look
+      color: Colors.transparent,
+  child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 3,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+                activeTrackColor: Colors.white,
+                inactiveTrackColor: Colors.white24,
+                thumbColor: Colors.white,
+                overlayColor: Colors.white24,
+              ),
+              child: Slider(
+                value: posMs.toDouble(),
+                min: 0,
+                max: (totalMs == 0 ? 1 : totalMs).toDouble(),
+                onChanged: canScrub
+                    ? (v) => onSeek(Duration(milliseconds: v.round()))
+                    : null,
+              ),
+            ),
+          ],
+        ),
     );
   }
 }
