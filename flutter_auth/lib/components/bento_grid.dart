@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
-import 'dart:ui';
 
 class BentoItem {
   final String title;
@@ -72,75 +71,58 @@ class _BentoCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withAlpha(51),
-            Colors.white.withAlpha(13),
-          ],
-        ),
-        border: Border.all(
-          color: Colors.white.withAlpha(77),
-          width: 1,
-        ),
+        color: item.color,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(26),
+            color: item.color.withValues(alpha: 0.3),
             blurRadius: isCompact ? 10 : 20,
             offset: Offset(0, isCompact ? 5 : 10),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Padding(
-            padding: EdgeInsets.all(padding),
-            child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(iconPadding),
-                    decoration: BoxDecoration(
-                      color: item.color.withAlpha(51),
-                      borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-                    ),
-                    child: Icon(item.icon, color: item.color, size: iconSize),
-                  ),
-                  SizedBox(height: spacing),
-                  Text(
-                    item.value,
-                    style: TextStyle(
-                      fontSize: valueSize,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  if (!isCompact) const SizedBox(height: 4),
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: titleSize,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (item.subtitle.isNotEmpty) ...[
-                    Text(
-                      item.subtitle,
-                      style: TextStyle(
-                        fontSize: subtitleSize,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ],
+      child: Padding(
+        padding: EdgeInsets.all(padding),
+        child: IntrinsicHeight(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(iconPadding),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                ),
+                child: Icon(item.icon, color: Colors.white, size: iconSize),
               ),
-            ),
+              SizedBox(height: spacing),
+              Text(
+                item.value,
+                style: TextStyle(
+                  fontSize: valueSize,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              if (!isCompact) const SizedBox(height: 4),
+              Text(
+                item.title,
+                style: TextStyle(
+                  fontSize: titleSize,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (item.subtitle.isNotEmpty) ...[
+                Text(
+                  item.subtitle,
+                  style: TextStyle(
+                    fontSize: subtitleSize,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

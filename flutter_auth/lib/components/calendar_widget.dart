@@ -1,10 +1,10 @@
 // lib/widgets/calendar_widget.dart
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calendar_service.dart';
+import '../theme/theme_extensions.dart';
 
 class CalendarWidget extends StatefulWidget {
   const CalendarWidget({Key? key}) : super(key: key);
@@ -62,35 +62,22 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       final content = Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(base * 1.4),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withAlpha((base * 1.07).toInt()),
-              Colors.white.withAlpha((base * 0.36).toInt()),
-            ],
-          ),
+          color: context.secondaryLight, // 30% - Secondary neutral for cards
           border: Border.all(
-            color: Colors.white.withAlpha((base * 3.6).toInt()),
-            width: base * 0.05,
+            color: context.neutralGray,
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha((base * 0.71).toInt()),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: base * 1.25,
               offset: Offset(0, base * 0.6),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(base * 1.4),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: base, sigmaY: base),
-            child: Padding(
-              padding: EdgeInsets.all(base),
-              child: isWide ? _buildWideLayout(base) : _buildNarrowLayout(base),
-            ),
-          ),
+        child: Padding(
+          padding: EdgeInsets.all(base),
+          child: isWide ? _buildWideLayout(base) : _buildNarrowLayout(base),
         ),
       );
 
@@ -123,6 +110,11 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
   // Narrow: calendar above, schedule below
   Widget _buildNarrowLayout(double base) {
+    final selected = _selectedDay ?? DateTime.now();
+    final key = DateTime(selected.year, selected.month, selected.day);
+    final events = _eventsByDate[key] ?? [];
+    final hasEvents = events.isNotEmpty;
+    
     return Column(
       children: [
         _buildHeader(base),
@@ -130,7 +122,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         _buildCalendarGrid(base),
         SizedBox(height: base * 0.6),
         SizedBox(
-          height: base * 11,
+          // Reduce height when no events
+          height: hasEvents ? base * 11 : base * 3,
           child: _buildEventSchedule(base),
         ),
       ],
@@ -151,7 +144,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         SizedBox(width: base * 0.6),
         Text(
           _getMonthYear(_focusedDay),
-          style: TextStyle(fontSize: base * 0.9, fontWeight: FontWeight.w700, color: Colors.white),
+          style: TextStyle(fontSize: base * 0.9, fontWeight: FontWeight.w700, color: context.neutralBlack),
         ),
         SizedBox(width: base * 0.6),
         _navButton(
@@ -171,10 +164,10 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       child: Container(
         padding: EdgeInsets.all(base * 0.4),
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha((base * 1.3).toInt()),
+          color: context.neutralGray,
           borderRadius: BorderRadius.circular(base * 0.6),
         ),
-        child: Icon(icon, color: Colors.white, size: base * 0.9),
+        child: Icon(icon, color: context.neutralDark, size: base * 0.9),
       ),
     );
   }
@@ -198,7 +191,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     child: Center(
                       child: Text(
                         d,
-                        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500, fontSize: base * 0.6),
+                        style: TextStyle(color: context.neutralMedium, fontWeight: FontWeight.w500, fontSize: base * 0.6),
                       ),
                     ),
                   ))
@@ -244,13 +237,13 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     margin: EdgeInsets.all(base * 0.15),
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? Colors.white.withAlpha((base * 4.2).toInt()) 
+                          ? context.accentNavy.withValues(alpha: 0.2)
                           : isToday 
-                              ? Colors.white.withAlpha((base * 1.6).toInt()) 
+                              ? context.accentNavyLight.withValues(alpha: 0.1)
                               : null,
                       borderRadius: BorderRadius.circular(base * 0.5),
                       border: isSelected 
-                          ? Border.all(color: Colors.white.withAlpha((base * 8.4).toInt()), width: base * 0.08) 
+                          ? Border.all(color: context.accentNavy, width: base * 0.08) 
                           : null,
                     ),
                     child: Stack(
@@ -260,10 +253,10 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                             displayDay.toString(),
                             style: TextStyle(
                               color: !isCurrentMonth 
-                                  ? Colors.white.withAlpha(60)  // Gray out other month dates
+                                  ? context.neutralMedium  // Gray out other month dates
                                   : (isSelected || isToday) 
-                                      ? Colors.white 
-                                      : Colors.white70,
+                                      ? context.accentNavy 
+                                      : context.neutralDark,
                               fontWeight: FontWeight.w600,
                               fontSize: base * 0.8,
                             ),
@@ -275,7 +268,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                             right: base * 0.27,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: Color(0xFF06B6D4),
+                                color: context.accentNavy,
                                 shape: BoxShape.circle,
                               ),
                               child: SizedBox(width: base * 0.36, height: base * 0.36),
@@ -299,16 +292,28 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     final events = _eventsByDate[key] ?? [];
 
     if (events.isEmpty) {
-      return Center(
-        child: Text(
-          'No events on ${selected.month}/${selected.day}/${selected.year}',
-          style: TextStyle(color: Colors.white70, fontSize: base * 0.7),
+      return Container(
+        padding: EdgeInsets.symmetric(vertical: base * 0.8),
+        child: Center(
+          child: Text(
+            'No events on ${selected.month}/${selected.day}/${selected.year}',
+            style: TextStyle(
+              color: context.neutralMedium, 
+              fontSize: base * 0.7,
+            ),
+          ),
         ),
       );
     }
 
-    // Color palette for multiple events
-    final colors = [Colors.blue, Colors.green, Colors.purple, Colors.orange, Colors.red];
+    // Color palette for multiple events - using our new color system
+    final colors = [
+      context.accentNavy, 
+      context.successGreen, 
+      context.infoBlue, 
+      context.warningOrange, 
+      context.errorRed
+    ];
 
     // Sort by start time if available
     events.sort((a, b) {
@@ -340,9 +345,9 @@ class _CalendarWidgetState extends State<CalendarWidget> {
             border: Border(left: BorderSide(color: color, width: base * 0.2)),
           ),
           child: ListTile(
-            title: Text(e['title'] ?? 'Event', style: TextStyle(color: Colors.white, fontSize: base * 0.8)),
-            subtitle: Text(timeText, style: TextStyle(color: Colors.white70, fontSize: base * 0.6)),
-            trailing: Text(e['location'] ?? '', style: TextStyle(color: Colors.white70, fontSize: base * 0.6)),
+            title: Text(e['title'] ?? 'Event', style: TextStyle(color: context.neutralBlack, fontSize: base * 0.8)),
+            subtitle: Text(timeText, style: TextStyle(color: context.neutralDark, fontSize: base * 0.6)),
+            trailing: Text(e['location'] ?? '', style: TextStyle(color: context.neutralMedium, fontSize: base * 0.6)),
             onTap: () {
               // optional: navigate to event detail
             },
