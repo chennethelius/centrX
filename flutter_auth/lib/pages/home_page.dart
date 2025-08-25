@@ -201,7 +201,7 @@ class _HomePageState extends State<HomePage> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  'Welcome ',
+                  'Welcome, ',
                   style: context.theme.textTheme.headlineMedium?.copyWith(
                     color: context.neutralDark, // Neutral text color for light background
                     fontWeight: FontWeight.w400,
