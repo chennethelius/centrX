@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:flutter_auth/pages/post_event_page.dart';
 import '../components/event_card.dart';
 import '../components/logout_button.dart';
@@ -8,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_auth/components/bento_grid.dart';
 import '../models/event.dart';
+import '../theme/theme_extensions.dart';
 
 class ClubPage extends StatefulWidget {
   const ClubPage({super.key});
@@ -40,25 +40,69 @@ class _ClubPageState extends State<ClubPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Upcoming Events',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: context.neutralBlack,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: context.spacingL),
         StreamBuilder<List<Event>>(
           stream: _fetchClubEvents(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(
+                  color: context.accentNavy,
+                ),
+              );
             } else if (snapshot.hasError) {
               return Center(
-                  child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: TextStyle(color: context.neutralDark),
+                ),
+              );
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Text('No upcoming events', style: TextStyle(color: Colors.white));
+              return Container(
+                padding: EdgeInsets.all(context.spacingXL),
+                decoration: BoxDecoration(
+                  color: context.secondaryLight,
+                  borderRadius: BorderRadius.circular(context.radiusL),
+                  border: Border.all(
+                    color: context.neutralGray,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      IconlyBold.calendar,
+                      size: 48,
+                      color: context.neutralMedium,
+                    ),
+                    SizedBox(height: context.spacingM),
+                    Text(
+                      'No upcoming events',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: context.neutralMedium,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: context.spacingS),
+                    Text(
+                      'Create your first event to get started',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: context.secondaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+              );
             } else {
               return ListView.builder(
                 itemCount: snapshot.data!.length,
@@ -78,79 +122,72 @@ class _ClubPageState extends State<ClubPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-              Color(0xFFf093fb),
-            ],
+      backgroundColor: context.neutralWhite,
+      appBar: AppBar(
+        backgroundColor: context.neutralWhite,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Club Dashboard',
+          style: TextStyle(
+            color: context.neutralBlack,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                floating: true,
-                automaticallyImplyLeading: false,
-                title: const Text(
-                  'Club Dashboard',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.settings_outlined, color: Colors.white),
-                  ),
-                ],
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildClubHeader(),
-                    const SizedBox(height: 24),
-                    BentoGrid(
-                      spacing: 16.0,
-                      items: [
-                        BentoItem(
-                          title: 'Likes',
-                          value: '0',
-                          subtitle: '',
-                          icon: IconlyBold.heart,
-                          color: Colors.red,
-                        ),
-                        BentoItem(
-                          title: 'Activity',
-                          value: '0',
-                          subtitle: '',
-                          icon: IconlyBold.activity,
-                          color: Colors.yellow,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildEventsSection(),
-                    const SizedBox(height: 100),
-                    LogoutButton(),
-                  ]),
-                ),
-              ),
-            ],
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: Icon(
+              IconlyBold.notification,
+              color: context.neutralDark,
+            ),
           ),
+          IconButton(
+            onPressed: () {},
+            icon: Icon(
+              IconlyBold.setting,
+              color: context.neutralDark,
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.all(context.spacingL),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildClubHeader(),
+                  SizedBox(height: context.spacingXL),
+                  BentoGrid(
+                    spacing: context.spacingM,
+                    items: [
+                      BentoItem(
+                        title: 'Likes',
+                        value: '0',
+                        subtitle: '',
+                        icon: IconlyBold.heart,
+                        color: Colors.red,
+                      ),
+                      BentoItem(
+                        title: 'Activity',
+                        value: '0',
+                        subtitle: '',
+                        icon: IconlyBold.activity,
+                        color: Colors.yellow,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: context.spacingXL),
+                  _buildEventsSection(),
+                  SizedBox(height: context.spacingXXL * 2),
+                  LogoutButton(),
+                ]),
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: _buildFloatingActionButton(),
@@ -158,119 +195,99 @@ class _ClubPageState extends State<ClubPage> {
   }
 
   Widget _buildClubHeader() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.fromRGBO(255, 255, 255, 0.25),
-                Color.fromRGBO(255, 255, 255, 0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-            border: Border.fromBorderSide(
-              BorderSide(
-                color: Color.fromRGBO(255, 255, 255, 0.3),
-                width: 1,
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: context.secondaryLight,
+        borderRadius: BorderRadius.circular(context.radiusXL),
+        border: Border.all(
+          color: context.neutralGray,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: context.neutralGray.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      padding: EdgeInsets.all(context.spacingXL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: Color.fromRGBO(255, 255, 255, 0.2),
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
+              Container(
+                padding: EdgeInsets.all(context.spacingL),
+                decoration: BoxDecoration(
+                  color: context.accentNavy,
+                  borderRadius: BorderRadius.circular(context.radiusL),
+                ),
+                child: Icon(
+                  IconlyBold.user_3,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              SizedBox(width: context.spacingL),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome, $clubName',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: context.neutralBlack,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.groups,
-                      color: Colors.white,
-                      size: 32,
+                    SizedBox(height: context.spacingXS),
+                    Text(
+                      '$memberCount members',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: context.neutralMedium,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome, $clubName',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$memberCount members',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Color.fromRGBO(255, 255, 255, 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildFloatingActionButton() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.fromRGBO(255, 255, 255, 0.3),
-                Color.fromRGBO(255, 255, 255, 0.2),
-              ],
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-            border: Border.fromBorderSide(
-              BorderSide(
-                color: Color.fromRGBO(255, 255, 255, 0.4),
-                width: 1,
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: context.accentNavy,
+        borderRadius: BorderRadius.circular(context.radiusL),
+        boxShadow: [
+          BoxShadow(
+            color: context.accentNavy.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          child: FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PostEventPage(),
-                ),
-              );
-            },
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            child: const Icon(
-              Icons.add,
-              color: Colors.white,
-              size: 28,
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const PostEventPage(),
             ),
-          ),
+          );
+        },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: const Icon(
+          IconlyBold.plus,
+          color: Colors.white,
+          size: 28,
         ),
       ),
     );

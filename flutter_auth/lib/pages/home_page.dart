@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
-import 'dart:ui';
 
 import 'package:flutter_auth/components/bento_grid.dart';
 import 'package:flutter_auth/components/logout_button.dart';
@@ -72,7 +71,7 @@ class _HomePageState extends State<HomePage> {
 
           return Container(
             decoration: BoxDecoration(
-              gradient: context.backgroundGradient,
+              color: context.neutralWhite, // 60% - Primary neutral background
             ),
             child: SafeArea(
               child: SingleChildScrollView(
@@ -88,7 +87,10 @@ class _HomePageState extends State<HomePage> {
                       padding: EdgeInsets.only(left: context.spacingL),
                       child: Text(
                         'Points',
-                        style: context.theme.textTheme.headlineMedium,
+                        style: context.theme.textTheme.headlineMedium?.copyWith(
+                          color: context.neutralBlack, // Primary neutral text color
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     _buildPointsCard(pointsBalance),
@@ -119,21 +121,21 @@ class _HomePageState extends State<HomePage> {
                                   value: '1',
                                   subtitle: '',
                                   icon: IconlyBold.calendar,
-                                  color: context.primaryCyan,
+                                  color: context.accentNavy, // Navy accent for consistency
                                 ),
                                 BentoItem(
                                   title: 'Scheduled',
                                   value: '3',
                                   subtitle: '',
                                   icon: IconlyBold.time_circle,
-                                  color: context.theme.colorScheme.secondary,
+                                  color: context.successGreen, // Status color for scheduled items
                                 ),
                                 BentoItem(
                                   title: 'Completed',
                                   value: '0',
                                   subtitle: '',
                                   icon: IconlyBold.tick_square,
-                                  color: context.accentGold,
+                                  color: context.infoBlue, // Status color for completed items
                                 ),
                               ],
                             ),
@@ -158,129 +160,145 @@ class _HomePageState extends State<HomePage> {
       padding: EdgeInsets.all(context.spacingXL),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(context.radiusXXL),
-        color: context.glassWhite(0.1),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(context.radiusXXL),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(context.spacingM),
-                decoration: BoxDecoration(
-                  color: context.glassWhite(0.2),
-                  borderRadius: BorderRadius.circular(context.radiusL),
-                ),
-                child: Icon(
-                  IconlyBold.profile,
-                  color: Colors.white,
-                  size: context.spacingXXL,
-                ),
-              ),
-              SizedBox(width: context.spacingL),
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      'Welcome, ',
-                      style: context.theme.textTheme.headlineMedium?.copyWith(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Text(
-                      "$userFirstName!",
-                      style: context.theme.textTheme.headlineLarge,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(context.spacingS),
-                decoration: BoxDecoration(
-                  color: context.glassWhite(0.2),
-                  borderRadius: BorderRadius.circular(context.radiusM),
-                ),
-                child: Icon(
-                  IconlyBold.notification,
-                  color: Colors.white,
-                  size: context.spacingXL,
-                ),
-              ),
-            ],
-          ),
+        color: context.secondaryLight, // 30% - Secondary neutral for cards (matching points card)
+        border: Border.all(
+          color: context.neutralGray,
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(context.spacingM),
+            decoration: BoxDecoration(
+              color: context.accentNavy, // Navy accent for the profile icon
+              borderRadius: BorderRadius.circular(context.radiusL),
+              boxShadow: [
+                BoxShadow(
+                  color: context.accentNavy.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              IconlyBold.profile,
+              color: Colors.white,
+              size: context.spacingXXL,
+            ),
+          ),
+          SizedBox(width: context.spacingL),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  'Welcome, ',
+                  style: context.theme.textTheme.headlineMedium?.copyWith(
+                    color: context.neutralDark, // Neutral text color for light background
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                Text(
+                  "$userFirstName!",
+                  style: context.theme.textTheme.headlineLarge?.copyWith(
+                    color: context.neutralBlack, // Darker text for emphasis
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.all(context.spacingS),
+            decoration: BoxDecoration(
+              color: context.errorRed, // Status color for notifications
+              borderRadius: BorderRadius.circular(context.radiusM),
+              boxShadow: [
+                BoxShadow(
+                  color: context.errorRed.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              IconlyBold.notification,
+              color: Colors.white,
+              size: context.spacingXL,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildPointsCard(int pointsBalance) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(context.spacingXL),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.25),
-            Colors.white.withValues(alpha: 0.1),
-          ],
-        ),
+        borderRadius: BorderRadius.circular(context.radiusHuge),
+        color: context.secondaryLight, // 30% - Secondary neutral for cards
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1.5,
+          color: context.neutralGray,
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-          child: Column(
+      child: Column(
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: Text(
-                        '$pointsBalance',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(left: context.spacingXS),
+                  child: Text(
+                    '$pointsBalance',
+                    style: context.theme.textTheme.displayLarge?.copyWith(
+                      color: context.accentNavy, // Navy for emphasis
+                      fontWeight: FontWeight.w900,
+                      fontSize: 48,
                     ),
+                    textAlign: TextAlign.left,
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.all(context.spacingS),
+                decoration: BoxDecoration(
+                  color: context.warningOrange, // Navy accent for the star icon
+                  borderRadius: BorderRadius.circular(context.radiusM),
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.warningOrange.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                    child: const Icon(
-                      IconlyBold.star,
-                      color: Color(0xFFFFD700),
-                      size: 20,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Icon(
+                  IconlyBold.star,
+                  color: Colors.white,
+                  size: context.spacingXL,
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

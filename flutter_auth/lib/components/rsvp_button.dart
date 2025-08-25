@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import 'package:intl/intl.dart';
 import '../services/rsvp_service.dart';
 import '../pages/rsvp_details.dart';
+import '../theme/theme_extensions.dart';
 
 /// A button that shows RSVP status and count, and invokes RsvpService.
 class RsvpButton extends StatefulWidget {
@@ -76,19 +77,31 @@ class _RsvpButtonState extends State<RsvpButton> {
   }
 
   Widget _buildIcon(bool active) {
-    return Column(
-      children: [
-        Icon(
-          active ? IconlyBold.tick_square : IconlyBold.calendar,
-          size: 38,
-          color: active ? Colors.greenAccent : Colors.redAccent,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'RSVP',
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
-        ),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 6,
+            offset: Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            active ? IconlyBold.tick_square : IconlyBold.calendar,
+            size: 38,
+            color: active ? context.successGreen : context.errorRed,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'RSVP',
+            style: TextStyle(color: context.surfaceWhite, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 }

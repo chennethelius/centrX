@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:iconly/iconly.dart';
 import 'student_teacher_login.dart';
 import 'club_admin_login.dart';
+import '../theme/theme_extensions.dart';
 
 class NewLoginPage extends StatelessWidget {
   const NewLoginPage({super.key});
@@ -9,132 +10,154 @@ class NewLoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-              Color(0xFFf093fb),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // App Title
-                Container(
-                  margin: const EdgeInsets.only(bottom: 80),
-                  child: const Text(
-                    'Welcome!',
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w300,
-                      color: Colors.white,
-                      letterSpacing: 2,
+      backgroundColor: context.neutralWhite,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(context.spacingXL),
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+              
+              // App Logo/Title
+              Text(
+                'centrX',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  color: context.neutralBlack,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              
+              const Spacer(flex: 1),
+              
+              // Welcome title
+              Text(
+                'Welcome!',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w300,
+                  color: context.neutralMedium,
+                  letterSpacing: 1,
+                ),
+              ),
+              
+              SizedBox(height: context.spacingL),
+              
+              // Subtitle
+              Text(
+                'Are you joining as a',
+                style: context.theme.textTheme.bodyMedium?.copyWith(
+                  color: context.neutralMedium,
+                ),
+              ),
+              
+              SizedBox(height: context.spacingXXL),
+              
+              // User type options
+              _buildUserTypeOption(
+                context: context,
+                title: 'Student',
+                icon: IconlyBold.profile,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StudentTeacherLoginScreen(),
                     ),
-                  ),
-                ),
-                
-                // Student Option
-                _buildOptionButton(
-                  context: context,
-                  title: 'Student',
-                  icon: Icons.school_outlined,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const StudentTeacherLoginScreen(),
-                      ),
-                    );
-                  },
-                ),
-                
-                const SizedBox(height: 30),
-                
-                // Club Option
-                _buildOptionButton(
-                  context: context,
-                  title: 'Club',
-                  icon: Icons.groups_outlined,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ClubAdminLoginScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+                  );
+                },
+              ),
+              
+              SizedBox(height: context.spacingL),
+              
+              _buildUserTypeOption(
+                context: context,
+                title: 'Professor',
+                icon: IconlyBold.user_3,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StudentTeacherLoginScreen(),
+                    ),
+                  );
+                },
+              ),
+              
+              SizedBox(height: context.spacingL),
+              
+              _buildUserTypeOption(
+                context: context,
+                title: 'Club',
+                icon: IconlyBold.category,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ClubAdminLoginScreen(),
+                    ),
+                  );
+                },
+              ),
+              
+              const Spacer(flex: 3),
+              
+              SizedBox(height: context.spacingXL),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOptionButton({
+  Widget _buildUserTypeOption({
     required BuildContext context,
     required String title,
     required IconData icon,
     required VoidCallback onTap,
   }) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.7,
-      height: 80,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(25),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.fromRGBO(255, 255, 255, 0.2),
-                  Color.fromRGBO(255, 255, 255, 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(
-                color: const Color.fromRGBO(255, 255, 255, 0.3),
-                width: 1,
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(25),
-                onTap: onTap,
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        icon,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+      width: double.infinity,
+      height: 64,
+      decoration: BoxDecoration(
+        color: context.secondaryLight,
+        borderRadius: BorderRadius.circular(context.radiusL),
+        border: Border.all(
+          color: context.neutralGray,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(context.radiusL),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: context.spacingL),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: context.neutralDark,
+                  size: 24,
+                ),
+                SizedBox(width: context.spacingL),
+                Text(
+                  title,
+                  style: context.theme.textTheme.bodyLarge?.copyWith(
+                    color: context.neutralBlack,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
