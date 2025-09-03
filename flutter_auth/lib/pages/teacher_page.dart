@@ -202,7 +202,7 @@ class TeacherPage extends StatelessWidget {
                       _buildFeatureCard(
                         context,
                         icon: IconlyBold.document,
-                        title: 'Create Quest',
+                        title: 'Support Event',
                         subtitle: 'Add point opportunities',
                         onTap: () => _showComingSoon(context, 'Create Quest'),
                       ),
