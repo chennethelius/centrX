@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:iconly/iconly.dart';
 import '../theme/theme_extensions.dart';
 import '../services/auth_service.dart';
+import 'support_event_page.dart';
+import 'attendance_page.dart';
 
 class TeacherPage extends StatelessWidget {
   const TeacherPage({super.key});
@@ -193,41 +195,65 @@ class TeacherPage extends StatelessWidget {
                 SizedBox(height: context.spacingL),
 
                 Expanded(
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: context.spacingL,
-                    mainAxisSpacing: context.spacingL,
-                    childAspectRatio: 1.1,
-                    children: [
-                      _buildFeatureCard(
-                        context,
-                        icon: IconlyBold.document,
-                        title: 'Support Event',
-                        subtitle: 'Add point opportunities',
-                        onTap: () => _showComingSoon(context, 'Create Quest'),
-                      ),
-                      _buildFeatureCard(
-                        context,
-                        icon: IconlyBold.user_2,
-                        title: 'Attendance',
-                        subtitle: 'View student records',
-                        onTap: () => _showComingSoon(context, 'View Attendance'),
-                      ),
-                      _buildFeatureCard(
-                        context,
-                        icon: IconlyBold.download,
-                        title: 'Export Data',
-                        subtitle: 'Download reports',
-                        onTap: () => _showComingSoon(context, 'Export Data'),
-                      ),
-                      _buildFeatureCard(
-                        context,
-                        icon: IconlyBold.scan,
-                        title: 'QR Codes',
-                        subtitle: 'Generate quest QRs',
-                        onTap: () => _showComingSoon(context, 'QR Codes'),
-                      ),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate number of columns based on screen width
+                      final screenWidth = constraints.maxWidth;
+                      final minCardWidth = 140.0; // Minimum width for each card
+                      final crossAxisCount = (screenWidth / minCardWidth).floor().clamp(1, 3);
+                      
+                      // Calculate aspect ratio based on available space
+                      final cardWidth = screenWidth / crossAxisCount - context.spacingL;
+                      final aspectRatio = cardWidth / (cardWidth * 0.9); // Slightly taller than square
+                      
+                      return GridView.count(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: context.spacingL,
+                        mainAxisSpacing: context.spacingL,
+                        childAspectRatio: aspectRatio,
+                        padding: EdgeInsets.only(bottom: context.spacingXL),
+                        children: [
+                          _buildFeatureCard(
+                            context,
+                            icon: IconlyBold.document,
+                            title: 'Support Event',
+                            subtitle: 'Add point opportunities',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SupportEventPage(),
+                              ),
+                            ),
+                          ),
+                          _buildFeatureCard(
+                            context,
+                            icon: IconlyBold.user_2,
+                            title: 'Attendance',
+                            subtitle: 'View student records',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AttendancePage(),
+                              ),
+                            ),
+                          ),
+                          _buildFeatureCard(
+                            context,
+                            icon: IconlyBold.download,
+                            title: 'Export Data',
+                            subtitle: 'Download reports',
+                            onTap: () => _showComingSoon(context, 'Export Data'),
+                          ),
+                          _buildFeatureCard(
+                            context,
+                            icon: IconlyBold.scan,
+                            title: 'QR Codes',
+                            subtitle: 'Generate quest QRs',
+                            onTap: () => _showComingSoon(context, 'QR Codes'),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
 
