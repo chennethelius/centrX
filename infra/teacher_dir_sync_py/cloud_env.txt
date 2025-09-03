@@ -1,2 +1,1 @@
-SLU_FACULTY_LIST_URL: "https://www.slu.edu/business/about/faculty/directory.php"
 COURSE_CATALOG_URLS: "https://catalog.slu.edu/courses-az/biz/,https://catalog.slu.edu/courses-az/acct/,https://catalog.slu.edu/courses-az/fin/,https://catalog.slu.edu/courses-az/econ/,https://catalog.slu.edu/courses-az/mkt/,https://catalog.slu.edu/courses-az/mgt/,https://catalog.slu.edu/courses-az/ib/,https://catalog.slu.edu/courses-az/opm/,https://catalog.slu.edu/courses-az/btm/"

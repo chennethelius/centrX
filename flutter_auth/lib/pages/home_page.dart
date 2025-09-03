@@ -6,6 +6,7 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter_auth/components/bento_grid.dart';
 import 'package:flutter_auth/components/logout_button.dart';
 import 'package:flutter_auth/components/calendar_widget.dart';
+import 'package:flutter_auth/components/class_enrollment_widget.dart';
 import 'package:flutter_auth/theme/theme_extensions.dart';
 
 class HomePage extends StatefulWidget {
@@ -96,9 +97,9 @@ class _HomePageState extends State<HomePage> {
                     _buildPointsCard(pointsBalance),
 
                     SizedBox(height: context.spacingXXL),
+                    
+                    // Calendar Section - moved above class enrollment
                     if (user != null) ...[
-                      SizedBox(height: context.spacingXXL),
-                      // Calendar flexibility test: calendar (3/4) + bento grid (1/4)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -107,7 +108,10 @@ class _HomePageState extends State<HomePage> {
                             flex: 3,
                             child: Padding(
                               padding: EdgeInsets.only(right: context.spacingM),
-                              child: const CalendarWidget(),
+                              child: SizedBox(
+                                height: 400, // Fixed height to match the three bento boxes
+                                child: const CalendarWidget(),
+                              ),
                             ),
                           ),
                           // Bento grid (1/4 width)
@@ -142,6 +146,13 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                       ),
+                      SizedBox(height: context.spacingXXL),
+                    ],
+                    
+                    // Class Enrollment Section - moved below calendar
+                    if (user != null) ...[
+                      ClassEnrollmentWidget(userId: uid!),
+                      SizedBox(height: context.spacingXXL),
                     ],
                     SizedBox(height: context.spacingXXL),
                     LogoutButton(),

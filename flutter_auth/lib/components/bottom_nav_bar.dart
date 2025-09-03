@@ -21,7 +21,7 @@ class BottomNavBar extends StatelessWidget {
       margin: EdgeInsets.only(
         left: context.spacingL,
         right: context.spacingL,
-        bottom: context.spacingL,
+        bottom: context.spacingL - 5,
       ),
       padding: EdgeInsets.symmetric(
         horizontal: context.spacingS,
