@@ -12,6 +12,129 @@ class AuthService {
 
   FirebaseFirestore get firestore => _firestore;
 
+  /// Teacher authentication flow - checks teachers_dir and creates user account
+  Future<User?> teacherLogin() async {
+    try {
+      // 1️⃣ Google authentication (same as student flow)
+      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+      if (googleUser == null) return null;
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
+      if (user == null) return null;
+
+      // 2️⃣ Check if email exists in teachers_dir
+      final email = (user.email ?? '').toLowerCase();
+      final teacherQuery = await _firestore
+          .collection('teachers_dir')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (teacherQuery.docs.isEmpty) {
+        // Not a teacher - sign out and return null
+        await signOut();
+        return null;
+      }
+
+      // 3️⃣ Get teacher data from directory
+      final teacherData = teacherQuery.docs.first.data();
+      final fullName = teacherData['fullName'] ?? '';
+      
+      // Parse name and remove titles
+      final cleanName = fullName
+          .replaceAll(RegExp(r',?\s*(Ph\.?D\.?|Dr\.?|M\.?D\.?)'), '')
+          .trim();
+      final nameParts = cleanName.split(' ');
+      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+      // 4️⃣ Create/update user account with teacher role
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        'role': 'teacher',
+        'teacherId': teacherQuery.docs.first.id,
+        'department': teacherData['department'] ?? '',
+        'school': teacherData['school'] ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      return user;
+    } catch (e) {
+      debugPrint('❌ Teacher login error: $e');
+      return null;
+    }
+  }
+
+  /// TEST ONLY: Manual teacher login with email input (bypasses Google Sign-In)
+  /// Returns a Firebase [User] on success or null if not a teacher
+  Future<User?> testTeacherLogin(String testEmail) async {
+    try {
+      debugPrint('🧪 TEST: Starting manual teacher login for: $testEmail');
+      
+      // 1️⃣ Check if email exists in teachers_dir
+      final email = testEmail.toLowerCase().trim();
+      final teacherQuery = await _firestore
+          .collection('teachers_dir')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (teacherQuery.docs.isEmpty) {
+        debugPrint('❌ TEST: Email not found in teachers_dir');
+        return null;
+      }
+
+      // 2️⃣ Get teacher data from directory
+      final teacherData = teacherQuery.docs.first.data();
+      final fullName = teacherData['fullName'] ?? '';
+      
+      debugPrint('📊 TEST: Found teacher data - $fullName, Dept: ${teacherData['department']}');
+      
+      // Parse name and remove titles
+      final cleanName = fullName
+          .replaceAll(RegExp(r',?\s*(Ph\.?D\.?|Dr\.?|M\.?D\.?)'), '')
+          .trim();
+      final nameParts = cleanName.split(' ');
+      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      
+      debugPrint("$firstName, $lastName");
+
+      // 3️⃣ Create a mock Firebase user for testing (using anonymous auth)
+      final userCredential = await _auth.signInAnonymously();
+      final user = userCredential.user;
+      if (user == null) return null;
+
+      debugPrint('👤 TEST: Created anonymous user, setting up teacher profile');
+
+      // 4️⃣ Create/update user account with teacher role
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        'role': 'teacher',
+        'teacherId': teacherQuery.docs.first.id,
+        'department': teacherData['department'] ?? '',
+        'school': teacherData['school'] ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'isTestAccount': true, // Mark as test account
+      }, SetOptions(merge: true));
+
+      debugPrint('✅ TEST: Teacher account created successfully');
+      return user;
+    } catch (e) {
+      debugPrint('❌ TEST: Teacher login error: $e');
+      return null;
+    }
+  }
+
   /// Triggers Google Sign-In flow
   /// Returns a Firebase [User] on success or null on cancel/error
   Future<User?> authenticateWithGoogle() async {
