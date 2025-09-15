@@ -35,19 +35,25 @@ class _ClassEnrollmentWidgetState extends State<ClassEnrollmentWidget> {
       if (userDoc.exists) {
         final userData = userDoc.data() as Map<String, dynamic>;
         final classes = userData['enrolledClasses'] as List<dynamic>? ?? [];
-        setState(() {
-          enrolledClasses = classes.cast<Map<String, dynamic>>();
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            enrolledClasses = classes.cast<Map<String, dynamic>>();
+            isLoading = false;
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
       debugPrint('Error loading enrolled classes: $e');
     }
   }
@@ -60,7 +66,7 @@ class _ClassEnrollmentWidgetState extends State<ClassEnrollmentWidget> {
       builder: (context) => _ClassSearchSheet(userId: widget.userId),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() {
         enrolledClasses.add(result);
       });
@@ -77,9 +83,11 @@ class _ClassEnrollmentWidgetState extends State<ClassEnrollmentWidget> {
           .doc(widget.userId)
           .update({'enrolledClasses': updatedClasses});
 
-      setState(() {
-        enrolledClasses = updatedClasses;
-      });
+      if (mounted) {
+        setState(() {
+          enrolledClasses = updatedClasses;
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -339,85 +347,159 @@ class _ClassSearchSheet extends StatefulWidget {
   State<_ClassSearchSheet> createState() => _ClassSearchSheetState();
 }
 
-class _ClassSearchSheetState extends State<_ClassSearchSheet> {
-  final TextEditingController _searchController = TextEditingController();
+class _ClassSearchSheetState extends State<_ClassSearchSheet>
+    with SingleTickerProviderStateMixin {
+  final _searchController = TextEditingController();
+  final _instructorSearchController = TextEditingController();
+  
   List<Map<String, dynamic>> _searchResults = [];
   List<Map<String, dynamic>> _instructorResults = [];
+  bool _isEnrolling = false;
   bool _isSearching = false;
   String? _selectedCourse;
   String? _selectedInstructor;
 
   @override
+  void initState() {
+    super.initState();
+    // Load all instructors when the widget initializes
+    _searchInstructors('');
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _instructorSearchController.dispose();
     super.dispose();
   }
 
   Future<void> _searchCourses(String query) async {
     if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-        _isSearching = false;
-      });
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _isSearching = false;
+        });
+      }
       return;
     }
 
-    setState(() {
-      _isSearching = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isSearching = true;
+      });
+    }
 
     try {
-      // Get all courses - remove the limit to search through entire catalog
-      final snapshot = await FirebaseFirestore.instance
-          .collection('courses_catalog')
-          .orderBy('code') // Add ordering for consistent results
-          .get();
+      // Try course_sessions first, fall back to courses_catalog if permission denied
+      try {
+        // Get all course sessions and group them by course
+        final snapshot = await FirebaseFirestore.instance
+            .collection('course_sessions')
+            .orderBy('course_code')
+            .get();
 
-      final searchLower = query.toLowerCase();
-      final results = snapshot.docs
-          .map((doc) => {...doc.data(), 'id': doc.id})
-          .where((course) {
-        final code = (course['code'] ?? '').toLowerCase();
-        final title = (course['title'] ?? '').toLowerCase();
-        final dept = (course['dept'] ?? '').toLowerCase();
+        debugPrint('Found ${snapshot.docs.length} course sessions');
+
+        final searchLower = query.toLowerCase();
+        final allSessions = snapshot.docs
+            .map((doc) => {...doc.data(), 'id': doc.id})
+            .where((session) {
+          final code = (session['course_code'] ?? '').toLowerCase();
+          final title = (session['course_title'] ?? '').toLowerCase();
+          final dept = (session['department'] ?? '').toLowerCase();
+          
+          return code.contains(searchLower) ||
+                 title.contains(searchLower) ||
+                 dept.contains(searchLower);
+        }).toList();
+
+        debugPrint('Filtered to ${allSessions.length} matching sessions');
+
+        // Group sessions by course code and title to create unique courses
+        final courseMap = <String, Map<String, dynamic>>{};
+        for (final session in allSessions) {
+          final courseKey = '${session['course_code']}-${session['course_title']}';
+          if (!courseMap.containsKey(courseKey)) {
+            courseMap[courseKey] = {
+              'id': courseKey,
+              'code': session['course_code'],
+              'title': session['course_title'],
+              'dept': session['department'],
+              'sessions': <Map<String, dynamic>>[],
+            };
+          }
+          courseMap[courseKey]!['sessions'].add(session);
+        }
+
+        debugPrint('Grouped into ${courseMap.length} unique courses');
+
+        final results = courseMap.values.take(50).toList();
+
+        if (mounted) {
+          setState(() {
+            _searchResults = results;
+            _isSearching = false;
+          });
+        }
+      } catch (sessionError) {
+        debugPrint('Course sessions failed, trying courses_catalog: $sessionError');
         
-        return code.contains(searchLower) ||
-               title.contains(searchLower) ||
-               dept.contains(searchLower);
-      }).take(50) // Limit the displayed results to 50 for performance
-          .toList();
+        // Fall back to courses_catalog
+        final snapshot = await FirebaseFirestore.instance
+            .collection('courses_catalog')
+            .orderBy('code')
+            .get();
 
-      setState(() {
-        _searchResults = results;
-        _isSearching = false;
-      });
+        debugPrint('Found ${snapshot.docs.length} courses in catalog');
+
+        final searchLower = query.toLowerCase();
+        final results = snapshot.docs
+            .map((doc) => {...doc.data(), 'id': doc.id})
+            .where((course) {
+          final code = (course['code'] ?? '').toLowerCase();
+          final title = (course['title'] ?? '').toLowerCase();
+          final dept = (course['dept'] ?? '').toLowerCase();
+          
+          return code.contains(searchLower) ||
+                 title.contains(searchLower) ||
+                 dept.contains(searchLower);
+        }).take(50)
+            .toList();
+
+        debugPrint('Filtered to ${results.length} matching courses');
+
+        if (mounted) {
+          setState(() {
+            _searchResults = results;
+            _isSearching = false;
+          });
+        }
+      }
     } catch (e) {
-      setState(() {
-        _isSearching = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+        });
+      }
       debugPrint('Error searching courses: $e');
     }
   }
 
   Future<void> _searchInstructors(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _instructorResults = [];
-      });
-      return;
-    }
-
     try {
-      // Get all instructors - remove the limit to search through entire directory
+      // Search all teachers in teachers_dir collection
       final snapshot = await FirebaseFirestore.instance
           .collection('teachers_dir')
-          .orderBy('fullName') // Add ordering for consistent results
+          .orderBy('fullName')
           .get();
 
       final searchLower = query.toLowerCase();
       final results = snapshot.docs
           .map((doc) => {...doc.data(), 'id': doc.id})
           .where((teacher) {
+        if (query.isEmpty) return true; // Show all if no search query
+        
         final fullName = (teacher['fullName'] ?? '').toLowerCase();
         final email = (teacher['email'] ?? '').toLowerCase();
         final department = (teacher['department'] ?? '').toLowerCase();
@@ -425,12 +507,16 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
         return fullName.contains(searchLower) ||
                email.contains(searchLower) ||
                department.contains(searchLower);
-      }).take(30) // Limit displayed results to 30 for performance
+      }).take(50)
           .toList();
 
-      setState(() {
-        _instructorResults = results;
-      });
+      debugPrint('Found ${results.length} teachers');
+
+      if (mounted) {
+        setState(() {
+          _instructorResults = results;
+        });
+      }
     } catch (e) {
       debugPrint('Error searching instructors: $e');
     }
@@ -439,18 +525,45 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
   Future<void> _enrollInClass() async {
     if (_selectedCourse == null || _selectedInstructor == null) return;
 
+    if (mounted) {
+      setState(() {
+        _isEnrolling = true;
+      });
+    }
+
     try {
       final courseData = _searchResults.firstWhere((c) => c['id'] == _selectedCourse);
       final instructorData = _instructorResults.firstWhere((i) => i['id'] == _selectedInstructor);
+      
+      // Validate course + instructor combination
+      final isValidCombination = await _validateCourseInstructorCombination(
+        courseData, 
+        instructorData
+      );
+      
+      if (!isValidCombination) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'This instructor does not teach this course. Please select a different instructor.',
+              ),
+              backgroundColor: context.errorRed,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
 
       final newClass = {
         'courseId': _selectedCourse,
-        'courseCode': courseData['code'] ?? '',
-        'courseName': courseData['title'] ?? '',
-        'department': courseData['dept'] ?? '',
+        'courseCode': courseData['code'],
+        'courseName': courseData['title'],
+        'department': courseData['dept'],
         'instructorId': _selectedInstructor,
-        'instructorName': instructorData['fullName'] ?? '',
-        'instructorEmail': instructorData['email'] ?? '',
+        'instructorName': instructorData['fullName'],
+        'instructorEmail': instructorData['email'],
         'enrolledAt': DateTime.now().toIso8601String(),
       };
 
@@ -464,7 +577,7 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
         userData['enrolledClasses'] ?? []
       );
 
-      // Check if already enrolled
+      // Check if already enrolled in this course with this instructor
       final isAlreadyEnrolled = currentClasses.any((c) => 
         c['courseId'] == _selectedCourse && c['instructorId'] == _selectedInstructor
       );
@@ -473,7 +586,7 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Already enrolled in this class'),
+              content: const Text('Already enrolled in this class with this instructor'),
               backgroundColor: context.warningOrange,
             ),
           );
@@ -489,6 +602,12 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
           .update({'enrolledClasses': currentClasses});
 
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Successfully enrolled in ${courseData['code']}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.pop(context, newClass);
       }
     } catch (e) {
@@ -500,6 +619,56 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isEnrolling = false;
+        });
+      }
+    }
+  }
+
+  Future<bool> _validateCourseInstructorCombination(
+    Map<String, dynamic> courseData,
+    Map<String, dynamic> instructorData,
+  ) async {
+    try {
+      // First try to validate using course_sessions
+      final sessionSnapshot = await FirebaseFirestore.instance
+          .collection('course_sessions')
+          .where('course_code', isEqualTo: courseData['code'])
+          .where('instructor', isEqualTo: instructorData['fullName'])
+          .get();
+
+      if (sessionSnapshot.docs.isNotEmpty) {
+        debugPrint('Valid combination found in course_sessions');
+        return true;
+      }
+
+      // If no sessions found, check if instructor's department matches course department
+      final instructorDept = (instructorData['department'] ?? '').toLowerCase();
+      final courseDept = (courseData['dept'] ?? '').toLowerCase();
+      
+      if (instructorDept.isNotEmpty && courseDept.isNotEmpty) {
+        // Allow if departments match or are related
+        final isRelatedDepartment = instructorDept.contains(courseDept) ||
+                                    courseDept.contains(instructorDept) ||
+                                    instructorDept == courseDept;
+        
+        if (isRelatedDepartment) {
+          debugPrint('Valid combination based on department match');
+          return true;
+        }
+      }
+
+      // If no specific validation rules match, allow the combination but log it
+      debugPrint('No specific validation found, allowing combination');
+      return true; // Be permissive for now
+      
+    } catch (e) {
+      debugPrint('Error validating course-instructor combination: $e');
+      // If validation fails due to error, allow the combination
+      return true;
     }
   }
 
@@ -586,7 +755,7 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: (_selectedCourse != null && _selectedInstructor != null)
+                onPressed: (_selectedCourse != null && _selectedInstructor != null && !_isEnrolling)
                     ? _enrollInClass
                     : null,
                 style: ElevatedButton.styleFrom(
@@ -597,13 +766,22 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
                     borderRadius: BorderRadius.circular(context.radiusL),
                   ),
                 ),
-                child: const Text(
-                  'Enroll in Class',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: _isEnrolling
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Enroll in Class',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -651,8 +829,10 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(context.radiusL),
                           onTap: () {
+                            debugPrint('Course selected: ${course['id']}');
                             setState(() {
                               _selectedCourse = course['id'];
+                              _selectedInstructor = null; // Reset instructor selection
                             });
                           },
                           child: Container(
@@ -725,7 +905,7 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
                       ),
                     );
                   },
-                ),
+                    ),
         ),
       ],
     );
@@ -751,97 +931,126 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet> {
 
         // Results
         Expanded(
-          child: ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
-            itemCount: _instructorResults.length,
-            itemBuilder: (context, index) {
-              final instructor = _instructorResults[index];
-              final isSelected = _selectedInstructor == instructor['id'];
-              
-              return Container(
-                margin: EdgeInsets.only(bottom: context.spacingM),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(context.radiusL),
-                    onTap: () {
-                      setState(() {
-                        _selectedInstructor = instructor['id'];
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(context.spacingL),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: isSelected 
-                              ? context.accentNavy
-                              : context.neutralGray.withValues(alpha: 0.2),
-                          width: isSelected ? 2 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(context.radiusL),
-                        color: isSelected 
-                            ? context.accentNavy.withValues(alpha: 0.05)
-                            : Colors.transparent,
+          child: _instructorResults.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        IconlyLight.user,
+                        size: 48,
+                        color: context.neutralBlack.withValues(alpha: 0.3),
                       ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: context.accentNavy.withValues(alpha: 0.1),
-                            child: Text(
-                              _getInitials(instructor['fullName'] ?? ''),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: context.accentNavy,
+                      SizedBox(height: context.spacingM),
+                      Text(
+                        'No instructors found',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: context.neutralBlack.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      SizedBox(height: context.spacingS),
+                      Text(
+                        'Try adjusting your search terms',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: context.neutralBlack.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+                  itemCount: _instructorResults.length,
+                  itemBuilder: (context, index) {
+                    final instructor = _instructorResults[index];
+                    final isSelected = _selectedInstructor == instructor['id'];
+                    
+                    return Container(
+                      margin: EdgeInsets.only(bottom: context.spacingM),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(context.radiusL),
+                          onTap: () {
+                            setState(() {
+                              _selectedInstructor = instructor['id'];
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(context.spacingL),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: isSelected 
+                                    ? context.accentNavy
+                                    : context.neutralGray.withValues(alpha: 0.2),
+                                width: isSelected ? 2 : 1,
                               ),
+                              borderRadius: BorderRadius.circular(context.radiusL),
+                              color: isSelected 
+                                  ? context.accentNavy.withValues(alpha: 0.05)
+                                  : Colors.transparent,
                             ),
-                          ),
-                          SizedBox(width: context.spacingM),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
-                                Text(
-                                  instructor['fullName'] ?? '',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.neutralBlack,
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: context.accentNavy.withValues(alpha: 0.1),
+                                  child: Text(
+                                    _getInitials(instructor['fullName'] ?? ''),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.accentNavy,
+                                    ),
                                   ),
                                 ),
-                                SizedBox(height: context.spacingXS),
-                                Text(
-                                  instructor['department'] ?? '',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: context.neutralBlack.withValues(alpha: 0.6),
+                                SizedBox(width: context.spacingM),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        instructor['fullName'] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.neutralBlack,
+                                        ),
+                                      ),
+                                      SizedBox(height: context.spacingXS),
+                                      Text(
+                                        instructor['department'] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: context.neutralBlack.withValues(alpha: 0.6),
+                                        ),
+                                      ),
+                                      Text(
+                                        instructor['email'] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: context.neutralBlack.withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  instructor['email'] ?? '',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: context.neutralBlack.withValues(alpha: 0.5),
+                                if (isSelected)
+                                  Icon(
+                                    IconlyBold.tick_square,
+                                    color: context.accentNavy,
+                                    size: 20,
                                   ),
-                                ),
                               ],
                             ),
                           ),
-                          if (isSelected)
-                            Icon(
-                              IconlyBold.tick_square,
-                              color: context.accentNavy,
-                              size: 20,
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

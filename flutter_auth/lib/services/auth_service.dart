@@ -15,18 +15,23 @@ class AuthService {
   /// Teacher authentication flow - checks teachers_dir and creates user account
   Future<User?> teacherLogin() async {
     try {
-      // 1️⃣ Google authentication (same as student flow)
-      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
-      if (googleUser == null) return null;
+      // 1️⃣ Clear cached Google Sign-In state (but keep it simple)
+      await _googleSignIn.signOut();
+      
+      // 2️⃣ Use the same authentication method as students to avoid Workspace issues
+      debugPrint('🔐 Starting teacher Google authentication...');
+      
+      // Try using the regular Google authentication (same as students)
+      final User? user = await authenticateWithGoogle();
+      if (user == null) {
+        debugPrint('❌ Google authentication failed');
+        return null;
+      }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
-      final userCredential = await _auth.signInWithCredential(credential);
-      final user = userCredential.user;
-      if (user == null) return null;
-
-      // 2️⃣ Check if email exists in teachers_dir
+      // 3️⃣ Check if email exists in teachers_dir
       final email = (user.email ?? '').toLowerCase();
+      debugPrint('🔍 Checking teacher email: $email');
+      
       final teacherQuery = await _firestore
           .collection('teachers_dir')
           .where('email', isEqualTo: email)
@@ -35,13 +40,16 @@ class AuthService {
 
       if (teacherQuery.docs.isEmpty) {
         // Not a teacher - sign out and return null
+        debugPrint('❌ Email $email not found in teachers_dir');
         await signOut();
         return null;
       }
 
-      // 3️⃣ Get teacher data from directory
+      // 4️⃣ Get teacher data from directory and update user role
       final teacherData = teacherQuery.docs.first.data();
       final fullName = teacherData['fullName'] ?? '';
+      
+      debugPrint('✅ Found teacher: $fullName for email: $email');
       
       // Parse name and remove titles
       final cleanName = fullName
@@ -51,7 +59,9 @@ class AuthService {
       final firstName = nameParts.isNotEmpty ? nameParts.first : '';
       final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-      // 4️⃣ Create/update user account with teacher role
+      debugPrint('📝 Parsed name: $firstName $lastName');
+
+      // 5️⃣ Update user account with teacher role (overwrite student data)
       await _firestore.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'firstName': firstName,
@@ -62,7 +72,9 @@ class AuthService {
         'department': teacherData['department'] ?? '',
         'school': teacherData['school'] ?? '',
         'createdAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      }, SetOptions(merge: false)); // Use merge: false to completely replace student data
+
+      debugPrint('🎉 Teacher account created for: $firstName $lastName ($email)');
 
       return user;
     } catch (e) {
