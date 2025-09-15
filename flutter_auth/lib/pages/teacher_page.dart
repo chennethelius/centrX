@@ -6,6 +6,7 @@ import '../theme/theme_extensions.dart';
 import '../services/auth_service.dart';
 import 'support_event_page.dart';
 import 'attendance_page.dart';
+import 'teacher_course_management_page.dart';
 
 class TeacherPage extends StatelessWidget {
   const TeacherPage({super.key});
@@ -246,10 +247,15 @@ class TeacherPage extends StatelessWidget {
                           ),
                           _buildFeatureCard(
                             context,
-                            icon: IconlyBold.scan,
-                            title: 'QR Codes',
-                            subtitle: 'Generate quest QRs',
-                            onTap: () => _showComingSoon(context, 'QR Codes'),
+                            icon: IconlyBold.document,
+                            title: 'Manage Courses',
+                            subtitle: 'Add & manage classes',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TeacherCourseManagementPage(),
+                              ),
+                            ),
                           ),
                         ],
                       );
