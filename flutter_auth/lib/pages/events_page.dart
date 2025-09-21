@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../components/video_overlay.dart';
-import '../services/social_button_services.dart';
 import '../services/video_cache_service.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -203,7 +202,6 @@ class _EventsPageState extends State<EventsPage> {
                                   location: location,
                                   likeCount: likeCount,
                                   commentCount: commentCount,
-                                  onCommentTap: () => (SocialButtonServices.showComments(context, eventId)),
                                   isPlaying: value.isPlaying,
                                   onPlayPauseTap: () {
                                     value.isPlaying ? controller.pause() : controller.play();
