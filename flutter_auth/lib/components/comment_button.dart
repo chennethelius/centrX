@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:iconly/iconly.dart';
 import '../theme/theme_extensions.dart';
+import 'comments_sheet.dart';
 
 class CommentButton extends StatelessWidget {
-  final IconData icon;
-  final int count;
+  final String eventId;
+  final String eventTitle;
+  final int commentCount;
+  final IconData? icon;
+  final Color? color;
   final bool active;
-  final Color color;
-  final VoidCallback onTap;
 
   const CommentButton({
     Key? key,
-    required this.icon,
-    required this.count,
-    required this.onTap,
-    required this.color,
+    required this.eventId,
+    required this.eventTitle,
+    required this.commentCount,
+    this.icon,
+    this.color,
     this.active = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // Match sizing with like button and RSVP button
-    final iconSize = 38.0; // Match like button and RSVP button
-    final fontSize = 12.0; // Match like button and RSVP button
+    const iconSize = 38.0; // Match like button and RSVP button
+    const fontSize = 12.0; // Match like button and RSVP button
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => _showCommentsSheet(context),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -39,23 +43,34 @@ class CommentButton extends StatelessWidget {
         child: Column(
           children: [
             Icon(
-              icon,
+              icon ?? IconlyBold.chat,
               size: iconSize,
-              color: active ? context.accentNavy : color,
+              color: active ? context.accentNavy : (color ?? Colors.white),
             ),
             const SizedBox(height: 4),
-            if (count >= 0)
-              Text(
-                _formatCount(count),
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  fontSize: fontSize,
-                ),
-                textAlign: TextAlign.center,
+            Text(
+              _formatCount(commentCount),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: color ?? Colors.white,
+                fontSize: fontSize,
               ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showCommentsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsSheet(
+        eventId: eventId,
+        eventTitle: eventTitle,
       ),
     );
   }

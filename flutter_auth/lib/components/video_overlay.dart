@@ -12,7 +12,6 @@ class VideoOverlay extends StatelessWidget {
   final String location;
   final int likeCount;
   final int commentCount;
-  final VoidCallback onCommentTap;
   final bool isPlaying;
   final VoidCallback onPlayPauseTap;
   // Mini controller inputs
@@ -29,7 +28,6 @@ class VideoOverlay extends StatelessWidget {
     required this.location,
     required this.likeCount,
     required this.commentCount,
-    required this.onCommentTap,
     required this.isPlaying,
     required this.onPlayPauseTap,
   required this.position,
@@ -168,11 +166,10 @@ class VideoOverlay extends StatelessWidget {
               LikeButton(eventId: eventId),
               SizedBox(height: height * 0.02),
               CommentButton(
-                icon: IconlyBold.chat,
-                count: commentCount,
+                eventId: eventId,
+                eventTitle: title,
+                commentCount: commentCount,
                 color: Colors.white,
-                onTap: onCommentTap,
-
               ),
               SizedBox(height: height * 0.04),
               // RSVP button positioned at bottom of action column

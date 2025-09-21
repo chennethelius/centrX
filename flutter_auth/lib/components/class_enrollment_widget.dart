@@ -399,7 +399,6 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet>
             .orderBy('course_code')
             .get();
 
-        debugPrint('Found ${snapshot.docs.length} course sessions');
 
         final searchLower = query.toLowerCase();
         final allSessions = snapshot.docs
@@ -432,8 +431,6 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet>
           courseMap[courseKey]!['sessions'].add(session);
         }
 
-        debugPrint('Grouped into ${courseMap.length} unique courses');
-
         final results = courseMap.values.take(50).toList();
 
         if (mounted) {
@@ -451,8 +448,6 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet>
             .orderBy('code')
             .get();
 
-        debugPrint('Found ${snapshot.docs.length} courses in catalog');
-
         final searchLower = query.toLowerCase();
         final results = snapshot.docs
             .map((doc) => {...doc.data(), 'id': doc.id})
@@ -466,8 +461,6 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet>
                  dept.contains(searchLower);
         }).take(50)
             .toList();
-
-        debugPrint('Filtered to ${results.length} matching courses');
 
         if (mounted) {
           setState(() {
@@ -509,8 +502,6 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet>
                department.contains(searchLower);
       }).take(50)
           .toList();
-
-      debugPrint('Found ${results.length} teachers');
 
       if (mounted) {
         setState(() {
@@ -641,7 +632,6 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet>
           .get();
 
       if (sessionSnapshot.docs.isNotEmpty) {
-        debugPrint('Valid combination found in course_sessions');
         return true;
       }
 
@@ -656,7 +646,6 @@ class _ClassSearchSheetState extends State<_ClassSearchSheet>
                                     instructorDept == courseDept;
         
         if (isRelatedDepartment) {
-          debugPrint('Valid combination based on department match');
           return true;
         }
       }
