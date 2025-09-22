@@ -11,7 +11,6 @@ class VideoOverlay extends StatelessWidget {
   final String description;
   final String location;
   final int likeCount;
-  final int commentCount;
   final bool isPlaying;
   final VoidCallback onPlayPauseTap;
   // Mini controller inputs
@@ -27,7 +26,6 @@ class VideoOverlay extends StatelessWidget {
     required this.description,
     required this.location,
     required this.likeCount,
-    required this.commentCount,
     required this.isPlaying,
     required this.onPlayPauseTap,
   required this.position,
@@ -168,7 +166,6 @@ class VideoOverlay extends StatelessWidget {
               CommentButton(
                 eventId: eventId,
                 eventTitle: title,
-                commentCount: commentCount,
                 color: Colors.white,
               ),
               SizedBox(height: height * 0.04),

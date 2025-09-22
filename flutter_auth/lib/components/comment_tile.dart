@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/comment.dart';
 import '../services/comment_service.dart';
 import '../theme/theme_extensions.dart';
 
-class CommentTile extends StatelessWidget {
+class CommentTile extends StatefulWidget {
   final Comment comment;
   final String eventId;
   final Function(Comment) onReply;
@@ -21,6 +22,42 @@ class CommentTile extends StatelessWidget {
   });
 
   @override
+  State<CommentTile> createState() => _CommentTileState();
+}
+
+class _CommentTileState extends State<CommentTile> {
+  bool _showReplies = false;
+  List<Comment> _replies = [];
+  StreamSubscription<List<Comment>>? _repliesSubscription;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadReplies();
+  }
+  
+  void _loadReplies() {
+    _repliesSubscription?.cancel();
+    _repliesSubscription = CommentService.getRepliesStream(widget.eventId, widget.comment.commentId).listen((replies) {
+      if (mounted) {
+        setState(() {
+          _replies = replies;
+          // Auto-show replies if there are any
+          if (replies.isNotEmpty && !_showReplies) {
+            _showReplies = true;
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _repliesSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -33,10 +70,10 @@ class CommentTile extends StatelessWidget {
               // User avatar
               CircleAvatar(
                 radius: 18,
-                backgroundImage: comment.authorAvatar.isNotEmpty
-                    ? NetworkImage(comment.authorAvatar)
+                backgroundImage: widget.comment.authorAvatar.isNotEmpty
+                    ? NetworkImage(widget.comment.authorAvatar)
                     : null,
-                child: comment.authorAvatar.isEmpty
+                child: widget.comment.authorAvatar.isEmpty
                     ? const Icon(Icons.person, size: 18)
                     : null,
               ),
@@ -51,7 +88,7 @@ class CommentTile extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          comment.authorName,
+                          widget.comment.authorName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
@@ -59,13 +96,13 @@ class CommentTile extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _formatTimeAgo(comment.createdAt),
+                          _formatTimeAgo(widget.comment.createdAt),
                           style: TextStyle(
                             color: Colors.grey[500],
                             fontSize: 12,
                           ),
                         ),
-                        if (comment.isEdited) ...[
+                        if (widget.comment.isEdited) ...[
                           const SizedBox(width: 4),
                           Text(
                             '(edited)',
@@ -82,7 +119,7 @@ class CommentTile extends StatelessWidget {
                     
                     // Comment text
                     Text(
-                      comment.content,
+                      widget.comment.content,
                       style: const TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 8),
@@ -94,8 +131,8 @@ class CommentTile extends StatelessWidget {
                         const SizedBox(width: 16),
                         _buildReplyButton(context),
                         const Spacer(),
-                        if (_canEdit()) _buildEditButton(context),
-                        if (_canDelete()) _buildDeleteButton(context),
+                        if (_canEdit) _buildEditButton(context),
+                        if (_canDelete) _buildDeleteButton(context),
                       ],
                     ),
                   ],
@@ -105,7 +142,7 @@ class CommentTile extends StatelessWidget {
           ),
           
           // Show replies if this is a top-level comment
-          if (comment.parentCommentId == null)
+          if (widget.comment.parentCommentId == null && _replies.isNotEmpty)
             _buildRepliesSection(context),
         ],
       ),
@@ -113,8 +150,7 @@ class CommentTile extends StatelessWidget {
   }
   
   Widget _buildLikeButton(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    final isLiked = comment.isLikedByUser(currentUserId);
+    final isLiked = widget.comment.isLikedByUser(FirebaseAuth.instance.currentUser?.uid);
     
     return GestureDetector(
       onTap: () => _toggleLike(context),
@@ -126,10 +162,10 @@ class CommentTile extends StatelessWidget {
             size: 14,
             color: isLiked ? Colors.red : Colors.grey[600],
           ),
-          if (comment.likeCount > 0) ...[
+          if (widget.comment.likeCount > 0) ...[
             const SizedBox(width: 4),
             Text(
-              comment.likeCount.toString(),
+              widget.comment.likeCount.toString(),
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],
@@ -143,7 +179,7 @@ class CommentTile extends StatelessWidget {
   
   Widget _buildReplyButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => onReply(comment),
+      onTap: () => widget.onReply(widget.comment),
       child: Text(
         'Reply',
         style: TextStyle(
@@ -157,7 +193,7 @@ class CommentTile extends StatelessWidget {
   
   Widget _buildEditButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => onEdit(comment),
+      onTap: () => widget.onEdit(widget.comment),
       child: Container(
         padding: const EdgeInsets.all(4),
         child: Icon(
@@ -171,7 +207,7 @@ class CommentTile extends StatelessWidget {
   
   Widget _buildDeleteButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => onDelete(comment),
+      onTap: () => widget.onDelete(widget.comment),
       child: Container(
         padding: const EdgeInsets.all(4),
         child: Icon(
@@ -184,45 +220,42 @@ class CommentTile extends StatelessWidget {
   }
   
   Widget _buildRepliesSection(BuildContext context) {
-    return StreamBuilder<List<Comment>>(
-      stream: CommentService.getRepliesStream(eventId, comment.commentId),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        
-        final replies = snapshot.data!;
-        
-        return Container(
-          margin: const EdgeInsets.only(left: 42, top: 12),
-          child: Column(
-            children: replies.map((reply) => CommentTile(
-              comment: reply,
-              eventId: eventId,
-              onReply: onReply,
-              onEdit: onEdit,
-              onDelete: onDelete,
-            )).toList(),
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        ..._replies.map((reply) => Padding(
+          padding: const EdgeInsets.only(left: 16.0, top: 8.0),
+          child: CommentTile(
+            comment: reply,
+            eventId: widget.eventId,
+            onReply: widget.onReply,
+            onEdit: widget.onEdit,
+            onDelete: widget.onDelete,
           ),
-        );
-      },
+        )).toList(),
+      ],
     );
-  }
-  
-  bool _canEdit() {
+  }  bool get _canEdit {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    return comment.isAuthoredByUser(currentUserId) && !comment.isDeleted;
+    return widget.comment.isAuthoredByUser(currentUserId) && !widget.comment.isDeleted;
   }
-  
-  bool _canDelete() {
+
+  bool get _canDelete {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    return comment.isAuthoredByUser(currentUserId) && !comment.isDeleted;
+    return widget.comment.isAuthoredByUser(currentUserId) && !widget.comment.isDeleted;
   }
   
   Future<void> _toggleLike(BuildContext context) async {
+    print('DEBUG: Attempting to like comment ${widget.comment.commentId}');
+    print('DEBUG: Comment author: ${widget.comment.authorId}');
+    print('DEBUG: Current user: ${FirebaseAuth.instance.currentUser?.uid}');
+    print('DEBUG: Currently liked: ${widget.comment.isLikedByUser(FirebaseAuth.instance.currentUser?.uid)}');
+    
     try {
-      await CommentService.toggleCommentLike(eventId, comment.commentId);
+      await CommentService.toggleCommentLike(widget.eventId, widget.comment.commentId);
+      print('DEBUG: Like toggle successful');
     } catch (e) {
+      print('DEBUG: Like toggle failed: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
