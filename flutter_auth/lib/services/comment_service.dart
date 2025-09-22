@@ -19,8 +19,7 @@ class CommentService {
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => Comment.fromFirestore(doc))
-              .where((comment) => !comment.isDeleted) // Filter out deleted comments in UI
-              .toList();
+              .toList(); // No need to filter deleted comments since they're actually deleted
         });
   }
 
@@ -36,8 +35,7 @@ class CommentService {
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => Comment.fromFirestore(doc))
-              .where((comment) => !comment.isDeleted) // Filter out deleted comments
-              .toList();
+              .toList(); // No need to filter deleted comments since they're actually deleted
         });
   }
 
@@ -211,7 +209,7 @@ class CommentService {
     }
   }
 
-  /// Delete a comment (soft delete)
+  /// Delete a comment (hard delete - permanently removes from Firestore)
   static Future<void> deleteComment(String eventId, String commentId) async {
     try {
       final userId = _auth.currentUser?.uid;
@@ -225,7 +223,7 @@ class CommentService {
           .collection('comments')
           .doc(commentId);
 
-      await _firestore.runTransaction((transaction) async {
+      final wasTopLevel = await _firestore.runTransaction<bool>((transaction) async {
         final commentSnap = await transaction.get(commentRef);
         
         if (!commentSnap.exists) {
@@ -234,23 +232,50 @@ class CommentService {
 
         final data = commentSnap.data()!;
         final authorId = data['authorId'] as String;
+        final parentCommentId = data['parentCommentId'] as String?;
 
         // Check if current user is the author
         if (authorId != userId) {
           throw Exception('Only the comment author can delete this comment');
         }
 
-        // Soft delete - mark as deleted but keep the document
-        transaction.update(commentRef, {
-          'isDeleted': true,
-          'content': '[Comment deleted]',
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        // Hard delete - actually remove the document from Firestore
+        transaction.delete(commentRef);
 
         debugPrint('Comment deleted successfully: $commentId');
+        
+        // Return whether this was a top-level comment
+        return parentCommentId == null;
       });
 
-      // Update event comment count
+      // If this was a top-level comment, also delete all its replies
+      if (wasTopLevel) {
+        final repliesSnapshot = await _firestore
+            .collection('events')
+            .doc(eventId)
+            .collection('comments')
+            .where('parentCommentId', isEqualTo: commentId)
+            .get();
+
+        // Delete all replies in a batch
+        if (repliesSnapshot.docs.isNotEmpty) {
+          final batch = _firestore.batch();
+          for (final replyDoc in repliesSnapshot.docs) {
+            batch.delete(replyDoc.reference);
+          }
+          await batch.commit();
+          
+          // Update count for deleted replies
+          final replyCount = repliesSnapshot.docs.length;
+          await _firestore.collection('events').doc(eventId).update({
+            'commentCount': FieldValue.increment(-replyCount),
+          });
+          
+          debugPrint('Deleted $replyCount replies for comment $commentId');
+        }
+      }
+
+      // Update event comment count for the main comment
       final eventRef = _firestore.collection('events').doc(eventId);
       await eventRef.update({
         'commentCount': FieldValue.increment(-1),
@@ -314,7 +339,6 @@ class CommentService {
     return _firestore
         .collectionGroup('comments')
         .where('authorId', isEqualTo: userId)
-        .where('isDeleted', isEqualTo: false)
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
@@ -340,7 +364,6 @@ class CommentService {
           .collection('events')
           .doc(eventId)
           .collection('comments')
-          .where('isDeleted', isEqualTo: false)
           .orderBy('createdAt', descending: true)
           .limit(limit * 3) // Get more to filter locally
           .get();
@@ -368,7 +391,6 @@ class CommentService {
           .collection('events')
           .doc(eventId)
           .collection('comments')
-          .where('isDeleted', isEqualTo: false)
           .get();
 
       final comments = snapshot.docs.map((doc) => Comment.fromFirestore(doc)).toList();

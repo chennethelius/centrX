@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/theme_extensions.dart';
 import 'comments_sheet.dart';
 
 class CommentButton extends StatelessWidget {
   final String eventId;
   final String eventTitle;
-  final int commentCount;
   final IconData? icon;
   final Color? color;
   final bool active;
@@ -15,7 +15,6 @@ class CommentButton extends StatelessWidget {
     Key? key,
     required this.eventId,
     required this.eventTitle,
-    required this.commentCount,
     this.icon,
     this.color,
     this.active = false,
@@ -24,9 +23,30 @@ class CommentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Match sizing with like button and RSVP button
-    const iconSize = 38.0; // Match like button and RSVP button
-    const fontSize = 12.0; // Match like button and RSVP button
+    const iconSize = 38.0;
+    const fontSize = 12.0;
 
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('events')
+          .doc(eventId)
+          .collection('comments')
+          .snapshots(),
+      builder: (context, snapshot) {
+        // Default UI while loading or on error
+        if (!snapshot.hasData) {
+          return _buildButton(context, 0, iconSize, fontSize);
+        }
+
+        // Count total comments (including replies)
+        final commentCount = snapshot.data!.docs.length;
+
+        return _buildButton(context, commentCount, iconSize, fontSize);
+      },
+    );
+  }
+
+  Widget _buildButton(BuildContext context, int commentCount, double iconSize, double fontSize) {
     return GestureDetector(
       onTap: () => _showCommentsSheet(context),
       child: Container(

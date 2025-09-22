@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconly/iconly.dart';
@@ -30,15 +31,52 @@ class _CommentsSheetState extends State<CommentsSheet> {
   String? _replyingToAuthor;
   bool _isPosting = false;
   
-  // Add local state for optimistic updates
+  // Add local state for optimistic updates and error handling
   List<Comment> _localComments = [];
-  bool _hasLoadedInitialComments = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+  StreamSubscription<List<Comment>>? _commentsSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupCommentsStream();
+  }
+
+  void _setupCommentsStream() {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    _commentsSubscription?.cancel();
+    _commentsSubscription = CommentService.getCommentsStream(widget.eventId).listen(
+      (comments) {
+        if (mounted) {
+          setState(() {
+            _localComments = comments;
+            _isLoading = false;
+            _errorMessage = null;
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = error.toString();
+          });
+        }
+      },
+    );
+  }
   
   @override
   void dispose() {
     _commentController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
+    _commentsSubscription?.cancel();
     super.dispose();
   }
 
@@ -55,7 +93,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, -2),
               ),
@@ -153,72 +191,74 @@ class _CommentsSheetState extends State<CommentsSheet> {
   }
   
   Widget _buildCommentsList(ScrollController scrollController) {
-    return StreamBuilder<List<Comment>>(
-      stream: CommentService.getCommentsStream(widget.eventId),
-      builder: (context, snapshot) {
-        // Only show loading on initial load
-        if (snapshot.connectionState == ConnectionState.waiting && !_hasLoadedInitialComments) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-        
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: Colors.grey[400],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Error loading comments',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => setState(() {
-                    _hasLoadedInitialComments = false;
-                  }),
-                  child: const Text('Try again'),
-                ),
-              ],
+    // Show loading state
+    if (_isLoading && _localComments.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    
+    // Show error state with retry option
+    if (_errorMessage != null && _localComments.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 48,
+              color: Colors.grey[400],
             ),
-          );
-        }
-        
-        // Update local cache when we have new data
-        if (snapshot.hasData) {
-          _localComments = snapshot.data!;
-          _hasLoadedInitialComments = true;
-        }
-        
-        // Use local cache for display
-        final comments = _localComments;
-        
-        if (comments.isEmpty) {
-          return _buildEmptyState();
-        }
-        
-        return ListView.builder(
-          controller: scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          itemCount: comments.length,
-          itemBuilder: (context, index) {
-            return CommentTile(
-              comment: comments[index],
-              eventId: widget.eventId,
-              onReply: _startReply,
-              onEdit: _editComment,
-              onDelete: _deleteComment,
-            );
-          },
+            const SizedBox(height: 16),
+            Text(
+              'Unable to load comments',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Check your internet connection',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _setupCommentsStream,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try again'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+
+    
+    // Show comments or empty state
+    return _buildCommentList(scrollController, _localComments);
+  }
+
+  Widget _buildCommentList(ScrollController scrollController, List<Comment> comments) {
+    if (comments.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return ListView.builder(
+      controller: scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: comments.length,
+      itemBuilder: (context, index) {
+        return CommentTile(
+          comment: comments[index],
+          eventId: widget.eventId,
+          onReply: _startReply,
+          onEdit: _editComment,
+          onDelete: _deleteComment,
         );
       },
     );
@@ -495,7 +535,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         });
       }
       
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to post comment: ${e.toString()}'),
@@ -513,18 +553,20 @@ class _CommentsSheetState extends State<CommentsSheet> {
   }
   
   void _editComment(Comment comment) {
-    // TODO: Implement edit comment dialog
+    final TextEditingController editController = TextEditingController(text: comment.content);
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Comment'),
         content: TextField(
-          controller: TextEditingController(text: comment.content),
+          controller: editController,
           decoration: const InputDecoration(
             hintText: 'Edit your comment...',
             border: OutlineInputBorder(),
           ),
           maxLines: 3,
+          autofocus: true,
         ),
         actions: [
           TextButton(
@@ -532,9 +574,38 @@ class _CommentsSheetState extends State<CommentsSheet> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              final newContent = editController.text.trim();
+              if (newContent.isEmpty) {
+                return;
+              }
+              
               Navigator.pop(context);
-              // TODO: Implement actual edit
+              
+              try {
+                await CommentService.editComment(
+                  eventId: widget.eventId,
+                  commentId: comment.commentId,
+                  newContent: newContent,
+                );
+                
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Comment updated'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update comment: ${e.toString()}'),
+                      backgroundColor: context.errorRed,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Save'),
           ),
@@ -563,7 +634,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
               try {
                 await CommentService.deleteComment(widget.eventId, comment.commentId);
                 
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Comment deleted'),
@@ -571,7 +642,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   );
                 }
               } catch (e) {
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Failed to delete comment: ${e.toString()}'),

@@ -157,7 +157,6 @@ class _EventsPageState extends State<EventsPage> {
           final desc       = data['description'] as String? ?? '';
           final location  = data['location']     as String? ?? '';
           final likeCount = data['likeCount']    as int? ?? 0;
-          final commentCount = data['commentCount']    as int? ?? 0;
           final clubId = data['ownerId'] as String? ?? '';
           final eventId = data['eventId'] as String? ?? '';
 
@@ -201,7 +200,6 @@ class _EventsPageState extends State<EventsPage> {
                                   description: desc,
                                   location: location,
                                   likeCount: likeCount,
-                                  commentCount: commentCount,
                                   isPlaying: value.isPlaying,
                                   onPlayPauseTap: () {
                                     value.isPlaying ? controller.pause() : controller.play();
