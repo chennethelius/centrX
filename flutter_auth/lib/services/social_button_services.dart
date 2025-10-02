@@ -19,53 +19,6 @@ class SocialButtonServices {
     );
   }
 
-  /// Legacy method - kept for backward compatibility
-  /// Use showComments instead for new implementations
-  @deprecated
-  static void showCommentsLegacy(BuildContext context, String mediaId) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        builder: (ctx, scrollController) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text('Comments for $mediaId'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   /// Toggle RSVP for the current user on a media document.
   static Future<void> toggleRsvp(String mediaId) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
