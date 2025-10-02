@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 //import 'pages/old_login_page.dart';
 import 'components/app_shell.dart';
 import 'login/new_login_page.dart';
-import 'pages/home_page.dart';
 import 'pages/club_page.dart';
+import 'pages/teacher_page.dart';
 //import 'pages/club_page.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
@@ -47,6 +47,7 @@ class MyApp extends StatelessWidget {
                 }
                 final role = snapshot.data;
                 if (role == 'student') return const AppShell();
+                if (role == 'teacher') return const TeacherPage();
                 if (role == 'club') return const ClubPage();
                 // fallback to login if role is missing
                 return const NewLoginPage();

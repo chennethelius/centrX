@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
-import 'package:flutter_auth/components/app_shell.dart';
 import 'package:flutter_auth/pages/teacher_page.dart';
 import '../theme/theme_extensions.dart';
 
-class StudentTeacherLoginScreen extends StatefulWidget {
-  const StudentTeacherLoginScreen({super.key});
+class TeacherLoginScreen extends StatefulWidget {
+  const TeacherLoginScreen({super.key});
 
   @override
-  State<StudentTeacherLoginScreen> createState() => _StudentTeacherLoginScreenState();
+  State<TeacherLoginScreen> createState() => _TeacherLoginScreenState();
 }
 
-class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
+class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
   final TextEditingController _testEmailController = TextEditingController();
 
   @override
@@ -57,7 +56,7 @@ class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
               
               // Login title
               Text(
-                'Login',
+                'Teacher Login',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
@@ -65,9 +64,20 @@ class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
                 ),
               ),
               
+              SizedBox(height: context.spacingM),
+              
+              Text(
+                'Sign in with your SLU faculty Google account to access teacher tools.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: context.neutralBlack.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              
               SizedBox(height: context.spacingXXL * 2),
               
-              // Google Sign In Button (Student/Teacher)
+              // Google Sign In Button for Teachers
               Container(
                 width: double.infinity,
                 height: 56,
@@ -91,38 +101,21 @@ class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(context.radiusL),
                     onTap: () async {
-                      try {
-                        // trigger the Google sign-in flow:
-                        final userCred = await AuthService().authenticateWithGoogle();
-                        // Ensure the context is still mounted before navigation/snackbar.
-                        if (!context.mounted) return;
-                        // if successful, navigate to home; otherwise show an error:
-                        if (userCred != null) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AppShell()),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Google sign-in failed or cancelled')),
-                          );
-                        }
-                      } on SLUEmailRequiredException catch (e) {
-                        if (!context.mounted) return;
-                        
-                        // Show SLU email requirement error snackbar
+                      // Use teacher-specific login flow
+                      final user = await AuthService().teacherLogin();
+                      if (!context.mounted) return;
+                      
+                      if (user != null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(e.message),
-                            backgroundColor: Colors.red,
-                            duration: const Duration(seconds: 5),
-                          ),
+                          SnackBar(content: Text('✅ Teacher login success: ${user.email}')),
                         );
-                      } catch (e) {
-                        if (!context.mounted) return;
-                        
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const TeacherPage()),
+                        );
+                      } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Sign-in error: ${e.toString()}')),
+                          const SnackBar(content: Text('❌ Teacher login failed - not a teacher or cancelled')),
                         );
                       }
                     },
@@ -131,7 +124,7 @@ class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Google icon (you can replace with actual Google logo)
+                          // Google icon
                           Container(
                             width: 24,
                             height: 24,
@@ -205,76 +198,43 @@ class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
                     
                     SizedBox(height: context.spacingM),
                     
-                    // Test buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final email = _testEmailController.text.trim();
-                              if (email.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Please enter an email address')),
-                                );
-                                return;
-                              }
-                              
-                              // Test teacher login
-                              final user = await AuthService().testTeacherLogin(email);
-                              if (!context.mounted) return;
-                              
-                              if (user != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('✅ TEST: Teacher login success for $email')),
-                                );
-                                // Navigate to teacher dashboard when ready
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const AppShell()),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('❌ TEST: Email $email not found in teacher directory')),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange.shade600,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Test Teacher Login'),
-                          ),
+                    // Test button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final email = _testEmailController.text.trim();
+                          if (email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter an email address')),
+                            );
+                            return;
+                          }
+                          
+                          // Test teacher login
+                          final user = await AuthService().testTeacherLogin(email);
+                          if (!context.mounted) return;
+                          
+                          if (user != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('✅ TEST: Teacher login success for $email')),
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const TeacherPage()),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('❌ TEST: Email $email not found in teacher directory')),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade600,
+                          foregroundColor: Colors.white,
                         ),
-                        SizedBox(width: context.spacingS),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              // Test with real teacher login flow
-                              final user = await AuthService().teacherLogin();
-                              if (!context.mounted) return;
-                              
-                              if (user != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('✅ Real teacher login success: ${user.email}')),
-                                );
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const AppShell()),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('❌ Teacher login failed - not a teacher or cancelled')),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue.shade600,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Real Teacher Login'),
-                          ),
-                        ),
-                      ],
+                        child: const Text('Test Teacher Login'),
+                      ),
                     ),
                     
                     SizedBox(height: context.spacingM),
@@ -301,6 +261,21 @@ class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
               ),
               
               const Spacer(),
+              
+              // Footer text
+              Center(
+                child: Text(
+                  'Create quests, track attendance, and manage student engagement.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.neutralBlack.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w400,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              SizedBox(height: context.spacingXL),
             ],
           ),
         ),
