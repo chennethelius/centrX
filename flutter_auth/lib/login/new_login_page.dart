@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
-import 'student_teacher_login.dart';
+import 'student_login.dart';
+import 'teacher_login.dart';
 import 'club_admin_login.dart';
 import '../theme/theme_extensions.dart';
 
@@ -63,7 +64,7 @@ class NewLoginPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const StudentTeacherLoginScreen(),
+                      builder: (context) => const StudentLoginScreen(),
                     ),
                   );
                 },
@@ -79,7 +80,7 @@ class NewLoginPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const StudentTeacherLoginScreen(),
+                      builder: (context) => const TeacherLoginScreen(),
                     ),
                   );
                 },

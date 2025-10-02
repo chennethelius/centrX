@@ -169,18 +169,33 @@ class LoginPageState extends State<LoginPage> {
                         icon: Icons.g_mobiledata,
                         label: 'Google',
                         onPressed: () async {
-                          // trigger the Google sign-in flow:
-                          final userCred = await AuthService().authenticateWithGoogle();
-                          // if successful, navigate to home; otherwise show an error:
-                          if (userCred != null) {
-                            // after successful login
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => const AppShell()),
-                            );
-                          } else {
+                          try {
+                            // trigger the Google sign-in flow:
+                            final userCred = await AuthService().authenticateWithGoogle();
+                            // if successful, navigate to home; otherwise show an error:
+                            if (userCred != null) {
+                              // after successful login
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AppShell()),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                              );
+                            }
+                          } on SLUEmailRequiredException catch (e) {
+                            // Show SLU email requirement error snackbar
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                              SnackBar(
+                                content: Text(e.message),
+                                backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 5),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Sign-in error: ${e.toString()}')),
                             );
                           }
                         },
