@@ -91,19 +91,38 @@ class _StudentTeacherLoginScreenState extends State<StudentTeacherLoginScreen> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(context.radiusL),
                     onTap: () async {
-                      // trigger the Google sign-in flow:
-                      final userCred = await AuthService().authenticateWithGoogle();
-                      // Ensure the context is still mounted before navigation/snackbar.
-                      if (!context.mounted) return;
-                      // if successful, navigate to home; otherwise show an error:
-                      if (userCred != null) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const AppShell()),
-                        );
-                      } else {
+                      try {
+                        // trigger the Google sign-in flow:
+                        final userCred = await AuthService().authenticateWithGoogle();
+                        // Ensure the context is still mounted before navigation/snackbar.
+                        if (!context.mounted) return;
+                        // if successful, navigate to home; otherwise show an error:
+                        if (userCred != null) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AppShell()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                          );
+                        }
+                      } on SLUEmailRequiredException catch (e) {
+                        if (!context.mounted) return;
+                        
+                        // Show SLU email requirement error snackbar
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                          SnackBar(
+                            content: Text(e.message),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Sign-in error: ${e.toString()}')),
                         );
                       }
                     },
