@@ -5,6 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:video_player/video_player.dart';
 
+/// Helper for conditional logging
+void _log(String message) {
+  if (kDebugMode) {
+    debugPrint('VideoControllerPool: $message');
+  }
+  // In production, you could send to Firebase Crashlytics or other logging service
+  // FirebaseCrashlytics.instance.log('VideoControllerPool: $message');
+}
+
 /// A small pool that keeps VideoPlayerControllers hot across screens.
 ///
 /// - Controllers are keyed by the video URL.
@@ -17,6 +26,12 @@ class VideoControllerPool {
 
   /// Tune this based on target devices. Start small.
   int maxControllers = 4;
+  
+  /// Delay before disposing non-sticky controllers (in seconds)
+  int disposalDelay = 3;
+  
+  /// Timer for delayed disposal
+  Timer? _disposalTimer;
 
   /// Persist lightweight UI state: last viewed video in the feed.
   int? lastIndex;
@@ -62,8 +77,8 @@ class VideoControllerPool {
 
       completer.complete(controller);
       return controller;
-    } catch (e, st) {
-      debugPrint('VideoControllerPool init error for $url: $e\n$st');
+    } catch (e) {
+      _log('Init error for $url: $e');
       // Fallback to network controller if cache/file failed.
       try {
         final controller = VideoPlayerController.networkUrl(Uri.parse(url))
@@ -74,9 +89,9 @@ class VideoControllerPool {
         _enforceLimit();
         completer.complete(controller);
         return controller;
-      } catch (e2, st2) {
-        debugPrint('VideoControllerPool network fallback failed for $url: $e2\n$st2');
-        completer.completeError(e2, st2);
+      } catch (e2) {
+        _log('Network fallback failed for $url: $e2');
+        completer.completeError(e2);
         rethrow;
       }
     } finally {
@@ -125,6 +140,7 @@ class VideoControllerPool {
 
   /// Dispose everything (e.g., on logout). Avoid calling on normal nav pops.
   void clear() {
+    _disposalTimer?.cancel();
     for (final e in _map.values) {
       e.controller.dispose();
     }
@@ -153,8 +169,37 @@ class VideoControllerPool {
     }
   }
 
-  /// Dispose all non-sticky controllers (e.g., on page dispose or page change).
+  /// Dispose all non-sticky controllers with a delay (e.g., on page dispose or page change).
   Future<void> disposeNonSticky() async {
+    // Cancel any existing disposal timer
+    _disposalTimer?.cancel();
+    
+    final nonStickyCount = _map.entries.where((e) => !e.value.sticky).length;
+    if (nonStickyCount == 0) {
+      _log('No non-sticky controllers to dispose');
+      return;
+    }
+    
+    _log('Scheduling disposal of $nonStickyCount controllers in ${disposalDelay}s');
+    
+    // Start a new timer for delayed disposal
+    _disposalTimer = Timer(Duration(seconds: disposalDelay), () async {
+      _log('Disposing non-sticky controllers after ${disposalDelay}s delay');
+      final toDispose = _map.entries.where((e) => !e.value.sticky).toList();
+      for (final e in toDispose) {
+        try {
+          await e.value.controller.dispose();
+        } catch (_) {}
+        _map.remove(e.key);
+        _lru.remove(e.key);
+      }
+      _log('Disposed ${toDispose.length} controllers');
+    });
+  }
+  
+  /// Immediately dispose all non-sticky controllers (for immediate cleanup)
+  Future<void> disposeNonStickyImmediate() async {
+    _disposalTimer?.cancel();
     final toDispose = _map.entries.where((e) => !e.value.sticky).toList();
     for (final e in toDispose) {
       try {
@@ -163,6 +208,18 @@ class VideoControllerPool {
       _map.remove(e.key);
       _lru.remove(e.key);
     }
+  }
+  
+  /// Cancel any pending disposal (useful when user returns quickly)
+  void cancelPendingDisposal() {
+    _disposalTimer?.cancel();
+    _log('Cancelled pending disposal');
+  }
+  
+  /// Configure the disposal delay (in seconds)
+  void setDisposalDelay(int seconds) {
+    disposalDelay = seconds;
+    _log('Disposal delay set to ${seconds}s');
   }
 }
 

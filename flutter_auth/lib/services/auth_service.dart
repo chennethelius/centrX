@@ -4,6 +4,15 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Custom exception for SLU email validation
+class SLUEmailRequiredException implements Exception {
+  final String message;
+  SLUEmailRequiredException(this.message);
+  
+  @override
+  String toString() => message;
+}
+
 /// Simplified AuthService that works on mobile and web
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -174,6 +183,19 @@ class AuthService {
       final user = userCredential.user;
       if (user == null) return null;
 
+      // 🔒 SLU EMAIL FILTER: Only allow @slu.edu email addresses for students
+      final userEmail = user.email ?? '';
+      if (!userEmail.endsWith('@slu.edu')) {
+        debugPrint('❌ Non-SLU email detected: $userEmail - signing out');
+        await signOut();
+        throw SLUEmailRequiredException(
+          'Only SLU email addresses (@slu.edu) are allowed to register.\n\n'
+          'Please sign in with your SLU email account to access CentrX.'
+        );
+      }
+
+      debugPrint('✅ SLU email verified: $userEmail');
+
       // check if user already exists in firestore
       final usersRef = _firestore.collection('users');
       final docRef   = usersRef.doc(user.uid);
@@ -205,8 +227,11 @@ class AuthService {
 
 
       return userCredential.user;
+    } on SLUEmailRequiredException {
+      // Re-throw SLU email exceptions so they can be handled by UI
+      rethrow;
     } catch (e) {
-      //print('❌ Google sign-in error: $e');
+      debugPrint('❌ Google sign-in error: $e');
       return null;
     }
   }
@@ -265,6 +290,19 @@ Future<User?> signInClubWithEmail({
 
   /// Current Firebase user, if signed in
   User? get currentUser => _auth.currentUser;
+  
+  /// Utility method to check if an email is a valid SLU email
+  static bool isValidSLUEmail(String email) {
+    return email.toLowerCase().endsWith('@slu.edu') && email.contains('@');
+  }
+  
+  /// Utility method to extract SLU username from email
+  static String extractSLUUsername(String email) {
+    if (isValidSLUEmail(email)) {
+      return email.split('@')[0];
+    }
+    return '';
+  }
 }
 
 

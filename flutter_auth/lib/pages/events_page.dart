@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
 import '../components/video_overlay.dart';
 import '../services/video_cache_service.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
@@ -18,6 +18,28 @@ class _EventsPageState extends State<EventsPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late final PageController _pageController;
   late final StreamSubscription<QuerySnapshot> _eventSub;
+  
+  /// Safely checks if a video controller is still usable
+  bool _isControllerValid(VideoPlayerController? controller) {
+    if (controller == null || !mounted) return false;
+    try {
+      // Try to access the value property - this will throw if disposed
+      controller.value;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  /// Safely executes a controller operation
+  void _safeControllerOperation(VideoPlayerController? controller, VoidCallback operation) {
+    if (!_isControllerValid(controller)) return;
+    try {
+      operation();
+    } catch (e) {
+      if (kDebugMode) debugPrint('Video controller operation failed: $e');
+    }
+  }
 
   // Keep both the raw docs and the player controllers
   final List<QueryDocumentSnapshot> _mediaDocs = [];
@@ -28,6 +50,10 @@ class _EventsPageState extends State<EventsPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Cancel any pending video disposal since user returned to events page
+    VideoControllerPool.instance.cancelPendingDisposal();
+    
   final savedIndex = VideoControllerPool.instance.lastIndex ?? 0;
   _currentIndex = savedIndex;
   _pageController = PageController(initialPage: savedIndex);
@@ -168,18 +194,34 @@ class _EventsPageState extends State<EventsPage> {
               future: VideoControllerPool.instance.getController(url),
               builder: (context, snapshot) {
                 final controller = snapshot.data;
-                final isReady = controller != null && controller.value.isInitialized;
+                final isControllerValid = _isControllerValid(controller);
+                final isReady = controller != null && 
+                               isControllerValid && 
+                               controller.value.isInitialized;
+                
+                // Don't create ValueListenableBuilder with disposed controller
+                if (!isControllerValid) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
                 return GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onTap: () {
                     final c = controller;
                     if (c == null) return;
-                    c.value.isPlaying ? c.pause() : c.play();
+                    _safeControllerOperation(c, () {
+                      final isPlaying = c.value.isPlaying;
+                      isPlaying ? c.pause() : c.play();
+                    });
                   },
                   child: isReady
                       ? ValueListenableBuilder<VideoPlayerValue>(
                           valueListenable: controller,
                           builder: (context, value, _) {
+                            // Additional safety check inside builder
+                            if (!mounted) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
                             return Stack(
                               children: [
                                 // 1) Letterboxed, centered video
@@ -202,12 +244,16 @@ class _EventsPageState extends State<EventsPage> {
                                   likeCount: likeCount,
                                   isPlaying: value.isPlaying,
                                   onPlayPauseTap: () {
-                                    value.isPlaying ? controller.pause() : controller.play();
+                                    _safeControllerOperation(controller, () {
+                                      value.isPlaying ? controller.pause() : controller.play();
+                                    });
                                   },
                                   position: value.position,
                                   totalDuration: value.duration,
                                   onSeek: (to) {
-                                    controller.seekTo(to);
+                                    _safeControllerOperation(controller, () {
+                                      controller.seekTo(to);
+                                    });
                                   },
                                 ),
                               ],

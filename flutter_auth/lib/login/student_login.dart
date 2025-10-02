@@ -54,7 +54,7 @@ class StudentLoginScreen extends StatelessWidget {
               SizedBox(height: context.spacingM),
               
               Text(
-                'Sign in with your Google account to access events and earn points.',
+                'Sign in with your SLU Google account to access events and earn points.',
                 style: TextStyle(
                   fontSize: 16,
                   color: context.neutralBlack.withValues(alpha: 0.7),
@@ -88,18 +88,37 @@ class StudentLoginScreen extends StatelessWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(context.radiusL),
                     onTap: () async {
-                      // Use student Google sign-in flow
-                      final userCred = await AuthService().authenticateWithGoogle();
-                      if (!context.mounted) return;
-                      
-                      if (userCred != null) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const AppShell()),
-                        );
-                      } else {
+                      try {
+                        // Use student Google sign-in flow
+                        final userCred = await AuthService().authenticateWithGoogle();
+                        if (!context.mounted) return;
+                        
+                        if (userCred != null) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AppShell()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                          );
+                        }
+                      } on SLUEmailRequiredException catch (e) {
+                        if (!context.mounted) return;
+                        
+                        // Show SLU email requirement error snackbar
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Google sign-in failed or cancelled')),
+                          SnackBar(
+                            content: Text(e.message),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Sign-in error: ${e.toString()}')),
                         );
                       }
                     },
