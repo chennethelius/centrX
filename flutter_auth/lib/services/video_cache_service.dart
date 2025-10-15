@@ -126,7 +126,14 @@ class VideoControllerPool {
   void pauseAllExcept(String? activeUrl) {
     _map.forEach((url, entry) {
       if (url != activeUrl) {
-        entry.controller.pause();
+        try {
+          if (_isControllerValid(entry.controller) && entry.controller.value.isPlaying) {
+            entry.controller.pause();
+            _log('Paused controller for: $url');
+          }
+        } catch (e) {
+          _log('Error pausing controller for $url: $e');
+        }
       }
     });
   }
@@ -169,32 +176,23 @@ class VideoControllerPool {
     }
   }
 
-  /// Dispose all non-sticky controllers with a delay (e.g., on page dispose or page change).
-  Future<void> disposeNonSticky() async {
-    // Cancel any existing disposal timer
-    _disposalTimer?.cancel();
-    
-    final nonStickyCount = _map.entries.where((e) => !e.value.sticky).length;
-    if (nonStickyCount == 0) {
-      _log('No non-sticky controllers to dispose');
-      return;
-    }
-    
-    _log('Scheduling disposal of $nonStickyCount controllers in ${disposalDelay}s');
-    
-    // Start a new timer for delayed disposal
-    _disposalTimer = Timer(Duration(seconds: disposalDelay), () async {
-      _log('Disposing non-sticky controllers after ${disposalDelay}s delay');
-      final toDispose = _map.entries.where((e) => !e.value.sticky).toList();
-      for (final e in toDispose) {
-        try {
-          await e.value.controller.dispose();
-        } catch (_) {}
-        _map.remove(e.key);
-        _lru.remove(e.key);
+  /// Pause all controllers (including sticky ones) when leaving the page
+  Future<void> pauseNonSticky() async {
+    _log('Pausing ALL ${_map.length} controllers when leaving page');
+
+    for (final entry in _map.entries) {
+      try {
+        final controller = entry.value.controller;
+        if (_isControllerValid(controller) && controller.value.isPlaying) {
+          await controller.pause();
+          _log('Paused controller for: ${entry.key}');
+        }
+      } catch (e) {
+        _log('Error pausing controller for ${entry.key}: $e');
       }
-      _log('Disposed ${toDispose.length} controllers');
-    });
+    }
+
+    _log('Paused all controllers, kept ${_map.length} controllers in memory');
   }
   
   /// Immediately dispose all non-sticky controllers (for immediate cleanup)
@@ -210,10 +208,39 @@ class VideoControllerPool {
     }
   }
   
-  /// Cancel any pending disposal (useful when user returns quickly)
-  void cancelPendingDisposal() {
+  /// Cancel any pending pause operations (when user returns quickly)
+  void cancelPendingPause() {
     _disposalTimer?.cancel();
-    _log('Cancelled pending disposal');
+    _disposalTimer = null;
+    _log('Cancelled pending pause operation');
+  }
+  
+  /// Immediately pause all controllers (emergency stop)
+  void pauseAll() {
+    _log('Emergency pause of all ${_map.length} controllers');
+    _map.forEach((url, entry) {
+      try {
+        if (_isControllerValid(entry.controller) && entry.controller.value.isPlaying) {
+          entry.controller.pause();
+          _log('Emergency paused: $url');
+        }
+      } catch (e) {
+        _log('Error in emergency pause for $url: $e');
+      }
+    });
+  }
+  
+  /// Helper method to check if controller is valid and not disposed
+  bool _isControllerValid(VideoPlayerController? controller) {
+    if (controller == null) return false;
+    
+    try {
+      // Try to access the value - this will throw if disposed
+      controller.value;
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
   
   /// Configure the disposal delay (in seconds)

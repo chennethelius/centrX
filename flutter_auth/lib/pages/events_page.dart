@@ -51,8 +51,12 @@ class _EventsPageState extends State<EventsPage> {
   void initState() {
     super.initState();
     
-    // Cancel any pending video disposal since user returned to events page
-    VideoControllerPool.instance.cancelPendingDisposal();
+    if (kDebugMode) {
+      debugPrint('EventsPage initialized - cancelling pending pause operations');
+    }
+    
+    // Cancel any pending pause operations when returning to page
+    VideoControllerPool.instance.cancelPendingPause();
     
   final savedIndex = VideoControllerPool.instance.lastIndex ?? 0;
   _currentIndex = savedIndex;
@@ -122,9 +126,12 @@ class _EventsPageState extends State<EventsPage> {
 
   @override
   void dispose() {
-  // Keep only the current one hot, pause it, dispose the rest.
-  unawaited(VideoControllerPool.instance.pauseSticky());
-  unawaited(VideoControllerPool.instance.disposeNonSticky());
+    if (kDebugMode) {
+      debugPrint('EventsPage disposing - immediately pausing all videos');
+    }
+    
+    // Immediately pause all videos when leaving the page
+    VideoControllerPool.instance.pauseAll();
     _eventSub.cancel(); 
     _pageController.dispose();
     super.dispose();

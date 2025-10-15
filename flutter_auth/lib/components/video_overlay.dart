@@ -45,26 +45,35 @@ class VideoOverlay extends StatelessWidget {
     final bottomOffset = height * 0.12; // 12% from bottom
     final actionButtonsOffset = height * 0.45; // 45% from top
     
-  return Stack(
+    return GestureDetector(
+      onTap: onPlayPauseTap, // Pause/play when tapping anywhere on screen
+      child: Stack(
       children: [
         // Center play icon
         Positioned.fill(
           child: Center(
             child: IgnorePointer(
               child: AnimatedOpacity(
-                opacity: isPlaying ? 0.0 : 0.7, // Hide when playing, show when paused
+                opacity: isPlaying ? 0.0 : 0.8, // Slightly more visible when paused
                 duration: const Duration(milliseconds: 300),
-                child: Icon(
-                  Icons.play_arrow_rounded,
-                  color: Colors.white.withValues(alpha: 0.9),
-                  size: width * 0.2, // Larger size - 20% of screen width
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                child: Container(
+                  padding: EdgeInsets.all(width * 0.03),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: width * 0.15, // Slightly smaller but more prominent
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -190,6 +199,7 @@ class VideoOverlay extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
 }
