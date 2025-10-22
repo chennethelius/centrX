@@ -313,7 +313,7 @@ class _LeaderboardPageFirebaseState extends State<LeaderboardPageFirebase>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    IconlyBold.badge,
+                    IconlyBold.star,
                     size: 14,
                     color: context.infoBlue,
                   ),
