@@ -6,7 +6,7 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter_auth/components/bento_grid.dart';
 import 'package:flutter_auth/components/logout_button.dart';
 import 'package:flutter_auth/components/calendar_widget.dart';
-import 'package:flutter_auth/components/class_enrollment_widget.dart';
+import 'package:flutter_auth/components/class_enrollment_widget_canvas.dart';
 import 'package:flutter_auth/theme/theme_extensions.dart';
 
 class HomePage extends StatefulWidget {
@@ -149,9 +149,15 @@ class _HomePageState extends State<HomePage> {
                       SizedBox(height: context.spacingXXL),
                     ],
                     
-                    // Class Enrollment Section - moved below calendar
+                    // Canvas Sync Banner
                     if (user != null) ...[
-                      ClassEnrollmentWidget(userId: uid!),
+                      _buildCanvasSyncBanner(data),
+                      SizedBox(height: context.spacingL),
+                    ],
+
+                    // Class Enrollment Section - Canvas syncing
+                    if (user != null) ...[
+                      ClassEnrollmentWidgetCanvas(userId: uid!),
                       SizedBox(height: context.spacingXXL),
                     ],
                     SizedBox(height: context.spacingXXL),
@@ -313,4 +319,89 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Widget _buildCanvasSyncBanner(Map<String, dynamic> userData) {
+    final canvasConnected = userData['canvasConnected'] as bool? ?? false;
+
+    // Don't show banner if already connected
+    if (canvasConnected) {
+      return const SizedBox.shrink();
+    }
+
+    // Check if user has dismissed the banner before
+    final bannerDismissed = userData['canvasBannerDismissed'] as bool? ?? false;
+    if (bannerDismissed) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: EdgeInsets.all(context.spacingL),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            context.accentNavy.withValues(alpha: 0.1),
+            context.accentNavy.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(context.radiusL),
+        border: Border.all(
+          color: context.accentNavy.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            IconlyBold.notification,
+            color: context.accentNavy,
+            size: context.spacingXL,
+          ),
+          SizedBox(width: context.spacingM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '🔗 Sync Your Canvas Classes',
+                  style: context.theme.textTheme.bodyLarge?.copyWith(
+                    color: context.neutralBlack,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: context.spacingXS),
+                Text(
+                  'Auto-import all your courses to track extra credit',
+                  style: context.theme.textTheme.bodySmall?.copyWith(
+                    color: context.neutralDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: context.spacingM),
+          PopupMenuButton(
+            onSelected: (value) async {
+              if (value == 'dismiss') {
+                // Mark banner as dismissed
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user?.uid)
+                    .update({'canvasBannerDismissed': true});
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'dismiss',
+                child: const Text('Dismiss'),
+              ),
+            ],
+            child: Icon(
+              IconlyBold.more_circle,
+              color: context.neutralGray,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
