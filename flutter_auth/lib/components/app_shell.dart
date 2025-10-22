@@ -21,8 +21,8 @@ class _AppShellState extends State<AppShell> {
   // list your pages in the same order as the nav bar items
   static const List<Widget> _tabs = [
     HomePage(),
-    LeaderboardPageFirebase(),
     EventsPage(),
+    LeaderboardPageFirebase(),
     QrScannerPage(),
   ];
 
