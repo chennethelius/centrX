@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/components/bottom_nav_bar.dart';
 import 'package:flutter_auth/pages/home_page.dart';
+import 'package:flutter_auth/pages/leaderboard_page_firebase.dart';
 import 'package:flutter_auth/pages/events_page.dart';
-import 'package:flutter_auth/pages/rewards_page.dart';
 import 'package:flutter_auth/pages/qr_scanner_page.dart';
 
 
@@ -21,8 +21,8 @@ class _AppShellState extends State<AppShell> {
   // list your pages in the same order as the nav bar items
   static const List<Widget> _tabs = [
     HomePage(),
+    LeaderboardPageFirebase(),
     EventsPage(),
-    RewardsPage(),
     QrScannerPage(),
   ];
 
