@@ -13,17 +13,30 @@ class CanvasStudentService {
     required String apiToken,
   }) async {
     try {
+      // Normalize Canvas URL (remove trailing slash if present)
+      String normalizedUrl = canvasUrl.replaceAll(RegExp(r'/$'), '');
+      
+      // Trim token in case user pasted with spaces
+      String trimmedToken = apiToken.trim();
+
       final response = await http
           .get(
-            Uri.parse('$canvasUrl/api/v1/users/self'),
+            Uri.parse('$normalizedUrl/api/v1/users/self'),
             headers: {
-              'Authorization': 'Bearer $apiToken',
+              'Authorization': 'Bearer $trimmedToken',
             },
           )
           .timeout(const Duration(seconds: 10));
 
+      // Debug: Log response for troubleshooting
+      if (response.statusCode != 200) {
+        print('Canvas API Error: ${response.statusCode}');
+        print('Response: ${response.body}');
+      }
+
       return response.statusCode == 200;
     } catch (e) {
+      print('Canvas Connection Error: $e');
       return false;
     }
   }
@@ -34,13 +47,17 @@ class CanvasStudentService {
     required String apiToken,
   }) async {
     try {
+      // Normalize Canvas URL
+      String normalizedUrl = canvasUrl.replaceAll(RegExp(r'/$'), '');
+      String trimmedToken = apiToken.trim();
+
       final response = await http
           .get(
             Uri.parse(
-              '$canvasUrl/api/v1/courses?enrollment_type=student&include=total_students&per_page=100',
+              '$normalizedUrl/api/v1/courses?enrollment_type=student&include=total_students&per_page=100',
             ),
             headers: {
-              'Authorization': 'Bearer $apiToken',
+              'Authorization': 'Bearer $trimmedToken',
             },
           )
           .timeout(const Duration(seconds: 15));

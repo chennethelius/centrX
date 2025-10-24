@@ -93,10 +93,32 @@ class _ClassEnrollmentWidgetCanvasState
       if (!isValid) {
         if (mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Invalid Canvas credentials'),
-              backgroundColor: Colors.red,
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Connection Failed'),
+              content: const Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('❌ Invalid Canvas credentials'),
+                  SizedBox(height: 16),
+                  Text(
+                    'Please check:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text('• Canvas URL is correct (https://slu.instructure.com)'),
+                  Text('• API token was copied completely'),
+                  Text('• Token has not expired'),
+                  Text('• Your Canvas account has API access'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
           );
         }
