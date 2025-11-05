@@ -7,7 +7,7 @@ import 'pages/teacher_page.dart';
 //import 'pages/club_page.dart';
 
 import 'package:flutter_auth/services/auth_service.dart';
-import 'package:flutter_auth/services/canvas_background_sync.dart';
+// import 'package:flutter_auth/services/canvas_background_sync.dart'; // COMMENTED OUT - Canvas integration disabled
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -36,10 +36,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = AuthService().currentUser;
     
+    // COMMENTED OUT - Canvas integration disabled
     // Trigger background Canvas sync if user is logged in
-    if (user != null) {
-      CanvasBackgroundSync.checkAndSyncIfNeeded().catchError((_) {});
-    }
+    // if (user != null) {
+    //   CanvasBackgroundSync.checkAndSyncIfNeeded().catchError((_) {});
+    // }
     
     return MaterialApp(
       debugShowCheckedModeBanner: false,
