@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import 'support_event_page.dart';
 import 'attendance_page.dart';
 import 'teacher_course_management_page.dart';
+import 'professor_dashboard_page.dart';
 
 class TeacherPage extends StatelessWidget {
   const TeacherPage({super.key});
@@ -214,6 +215,18 @@ class TeacherPage extends StatelessWidget {
                         childAspectRatio: aspectRatio,
                         padding: EdgeInsets.only(bottom: context.spacingXL),
                         children: [
+                          _buildFeatureCard(
+                            context,
+                            icon: IconlyBold.chart,
+                            title: 'EC Dashboard',
+                            subtitle: 'View student progress',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProfessorDashboardPage(),
+                              ),
+                            ),
+                          ),
                           _buildFeatureCard(
                             context,
                             icon: IconlyBold.document,
