@@ -1,0 +1,252 @@
+rules_version = '2';
+
+service cloud.firestore {
+
+  match /databases/{database}/documents {
+
+    
+
+    // Allow users to read and write their own user document
+
+    match /users/{userId} {
+
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      
+
+      // Allow reads for admins/professors viewing student data
+
+      allow read: if request.auth != null && isAdmin();
+
+      
+
+      // Allow gamification service to update points/badges
+
+      allow update: if request.auth != null && onlyUpdatingGamificationFields();
+
+      
+
+      // Subcollection for user activity tracking
+
+      match /activity/{activityId} {
+
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      }
+
+    }
+
+    
+
+    // ============================================
+    // CLUBS COLLECTION (NEW - for club login/management)
+    // ============================================
+    match /clubs/{clubId} {
+      // Authenticated users can read club info (for displaying club names)
+      allow read: if request.auth != null;
+      
+      // Club owners can create/update their own club document
+      allow create: if request.auth != null && request.auth.uid == clubId;
+      allow update: if request.auth != null && request.auth.uid == clubId;
+      
+      // Admins can update/delete any club
+      allow update, delete: if request.auth != null && isAdmin();
+      
+      // Club events subcollection
+      match /events/{eventId} {
+        // Anyone can read events
+        allow read: if true;
+        
+        // Only club owner can create/update/delete their events
+        allow create: if request.auth != null && request.auth.uid == clubId;
+        allow update: if request.auth != null && request.auth.uid == clubId;
+        allow delete: if request.auth != null && request.auth.uid == clubId;
+        
+        // Admins can modify any event
+        allow update, delete: if request.auth != null && isAdmin();
+      }
+    }
+
+    
+
+    // Allow authenticated users to read the course sessions catalog (read-only)
+
+    match /course_sessions/{document} {
+
+      allow read: if request.auth != null;
+
+    }
+
+    
+
+    // Allow authenticated users to read the old courses catalog (read-only) 
+
+    match /courses_catalog/{document} {
+
+      allow read: if request.auth != null;
+
+    }
+
+    
+
+    // Allow authenticated teachers to read and write to the teachers directory
+
+    match /teachers_dir/{teacherEmail} {
+
+      allow read, write: if request.auth != null && request.auth.token.email == teacherEmail;
+
+    }
+
+    
+
+    // Allow authenticated users to read teacher directory (for searching instructors)
+
+    match /teachers_dir/{document} {
+
+      allow read: if request.auth != null;
+
+    }
+
+    
+
+    // Allow authenticated users to read organizations (for club login search)
+
+    match /organizations/{organizationId} {
+
+      allow read;
+
+      allow list: if request.query.limit <= 50;
+
+    }
+
+    
+
+    // Allow authenticated users to read and write events
+
+    match /events/{eventId} {
+
+      allow read, write: if request.auth != null;
+
+      
+
+      // Event reviews subcollection (public read, authenticated write)
+
+      match /reviews/{reviewId} {
+
+        allow read: if true;
+
+        allow create: if request.auth != null &&
+
+                      request.resource.data.userId == request.auth.uid &&
+
+                      request.resource.data.rating >= 1 &&
+
+                      request.resource.data.rating <= 5;
+
+        allow update, delete: if request.auth != null && 
+
+                              request.resource.data.userId == request.auth.uid;
+
+      }
+
+      
+
+      // Event comments
+
+      match /comments/{commentId} {
+
+        allow read, write: if request.auth != null;
+
+      }
+
+    }
+
+    
+
+    // Allow authenticated users to read and write posts
+
+    match /posts/{document} {
+
+      allow read, write: if request.auth != null;
+
+    }
+
+    
+
+    // Allow authenticated users to read and write comments
+
+    match /comments/{document} {
+
+      allow read, write: if request.auth != null;
+
+    }
+
+    
+
+    // User activity tracking (logging points, badges, etc.)
+
+    match /user_activity/{activityId} {
+
+      allow read: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      allow create, write: if request.auth != null;
+
+    }
+
+    
+
+    // Real-time notifications (rank changes, badges, RSVP reminders)
+
+    match /notifications/{notificationId} {
+
+      allow read: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null;
+
+      allow update: if request.auth != null && 
+
+                    request.resource.data.userId == request.auth.uid &&
+
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+
+      allow delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+    }
+
+    
+
+    // Reports collection for content moderation
+    match /reports/{reportId} {
+      // Anyone authenticated can create reports
+      allow create: if request.auth != null && 
+                   request.resource.data.reporterId == request.auth.uid;
+      
+      // Only admins can read/update reports
+      allow read, update: if request.auth != null && isAdmin();
+    }
+
+    
+
+    // Helper functions
+
+    function isAdmin() {
+
+      return request.auth != null && 
+
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'professor', 'club_admin'];
+
+    }
+
+    
+
+    function onlyUpdatingGamificationFields() {
+
+      let updated = request.resource.data.diff(resource.data).affectedKeys();
+
+      return updated.hasOnly(['totalPoints', 'currentRank', 'badges', 'eventsAttended', 'longestStreak', 'updatedAt', 'extraCreditByClass', 'followingClubs']);
+
+    }
+
+  }
+
+}

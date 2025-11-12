@@ -253,19 +253,30 @@ Future<User?> signInClubWithEmail({
 
     // 2️⃣ Ensure the club Firestore doc exists
     final clubRef = _firestore.collection('clubs').doc(user.uid);
-    final snap    = await clubRef.get();
-    if (!snap.exists) {
-      // Create with minimal defaults
-      await clubRef.set({
-        'uid':       user.uid,
-        'email':     email,
-        'password': password,
-        'club_name': '',
-        'createdAt': FieldValue.serverTimestamp(),
-        'members_count': 0,
-        'events_posted': 0,
-        'role': 'club',
-      });
+    
+    try {
+      final snap = await clubRef.get();
+      if (!snap.exists) {
+        // Create with minimal defaults
+        await clubRef.set({
+          'uid':       user.uid,
+          'email':     email,
+          'password': password, // Note: Consider removing password from Firestore for security
+          'club_name': '',
+          'createdAt': FieldValue.serverTimestamp(),
+          'members_count': 0,
+          'events_posted': 0,
+          'role': 'club',
+        });
+      }
+    } on FirebaseException catch (e) {
+      // Handle Firestore permission errors specifically
+      if (e.code == 'permission-denied') {
+        debugPrint('❌ Firestore permission denied. Make sure Firestore rules are deployed.');
+        debugPrint('Run: firebase deploy --only firestore:rules');
+        rethrow;
+      }
+      rethrow;
     }
 
     return user;
