@@ -67,6 +67,42 @@ service cloud.firestore {
       }
     }
 
+    // ============================================
+    // CLUB PARTNERSHIPS COLLECTION
+    // ============================================
+    match /club_partnerships/{partnershipId} {
+      // Teachers can read their own partnerships
+      allow read: if request.auth != null && 
+                 (resource.data.teacherId == request.auth.uid || isAdmin());
+      
+      // Teachers can create partnerships
+      allow create: if request.auth != null && 
+                   request.resource.data.teacherId == request.auth.uid;
+      
+      // Teachers can update their own partnerships, admins can update any
+      allow update: if request.auth != null && 
+                   (resource.data.teacherId == request.auth.uid || isAdmin());
+      
+      // Teachers can delete their own partnerships, admins can delete any
+      allow delete: if request.auth != null && 
+                   (resource.data.teacherId == request.auth.uid || isAdmin());
+    }
+
+    // ============================================
+    // PARTNERSHIP ATTENDANCES COLLECTION
+    // ============================================
+    match /partnership_attendances/{attendanceId} {
+      // Students can read their own attendances
+      allow read: if request.auth != null && 
+                 resource.data.studentId == request.auth.uid;
+      
+      // Teachers can read attendances for their partnerships
+      allow read: if request.auth != null && isAdmin();
+      
+      // System can create attendances (via PointService)
+      allow create: if request.auth != null;
+    }
+
     
 
     // Allow authenticated users to read the course sessions catalog (read-only)

@@ -9,8 +9,27 @@ import 'attendance_page.dart';
 import 'teacher_course_management_page.dart';
 import 'professor_dashboard_page.dart';
 
-class TeacherPage extends StatelessWidget {
+class TeacherPage extends StatefulWidget {
   const TeacherPage({super.key});
+
+  @override
+  State<TeacherPage> createState() => _TeacherPageState();
+}
+
+class _TeacherPageState extends State<TeacherPage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,199 +105,176 @@ class TeacherPage extends StatelessWidget {
   }) {
     return Column(
       children: [
-        // Header with back button and logout
-        Padding(
+        // Header
+        Container(
           padding: EdgeInsets.symmetric(
             horizontal: context.spacingL,
             vertical: context.spacingM,
           ),
-          child: Row(
+          decoration: BoxDecoration(
+            color: context.neutralWhite,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
             children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Icon(
-                  IconlyBold.arrow_left_2,
-                  color: context.neutralBlack,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'centrX',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: context.neutralBlack,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const Spacer(),
-              if (showLogout)
-                IconButton(
-                  onPressed: () async {
-                    await AuthService().signOut();
-                    if (context.mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/login',
-                        (route) => false,
-                      );
-                    }
-                  },
-                  icon: Icon(
-                    IconlyBold.logout,
-                    color: context.neutralBlack,
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(
+                      IconlyBold.arrow_left_2,
+                      color: context.neutralBlack,
+                    ),
                   ),
-                )
-              else
-                SizedBox(width: 48), // Maintain spacing
+                  const Spacer(),
+                  Text(
+                    'centrX',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: context.neutralBlack,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (showLogout)
+                    IconButton(
+                      onPressed: () async {
+                        await AuthService().signOut();
+                        if (context.mounted) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          );
+                        }
+                      },
+                      icon: Icon(
+                        IconlyBold.logout,
+                        color: context.neutralBlack,
+                      ),
+                    )
+                  else
+                    SizedBox(width: 48),
+                ],
+              ),
+              SizedBox(height: context.spacingS),
+              // Welcome Section
+              Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back,',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: context.neutralBlack.withValues(alpha: 0.7),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      SizedBox(height: context.spacingXS),
+                      Row(
+                        children: [
+                          Text(
+                            '$firstName $lastName',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: context.neutralBlack,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(width: context.spacingS),
+                          if (isTestAccount)
+                            _buildBadge('TEST', Colors.orange)
+                          else if (isDemo)
+                            _buildBadge('DEMO', context.accentNavy),
+                        ],
+                      ),
+                      SizedBox(height: context.spacingXS),
+                      Text(
+                        '$department • $school',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: context.neutralBlack.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ],
           ),
         ),
 
-        // Content
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: context.spacingL),
-
-                // Welcome Section
-                Text(
-                  'Welcome back,',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: context.neutralBlack.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                SizedBox(height: context.spacingXS),
-                Row(
-                  children: [
-                    Text(
-                      '$firstName $lastName',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: context.neutralBlack,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    SizedBox(width: context.spacingS),
-                    if (isTestAccount)
-                      _buildBadge('TEST', Colors.orange)
-                    else if (isDemo)
-                      _buildBadge('DEMO', context.accentNavy),
-                  ],
-                ),
-                SizedBox(height: context.spacingXS),
-                Text(
-                  '$department • $school',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: context.neutralBlack.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-
-                SizedBox(height: context.spacingXXL * 2),
-
-                // Features Grid
-                Text(
-                  'Teacher Tools',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: context.neutralBlack,
-                  ),
-                ),
-
-                SizedBox(height: context.spacingL),
-
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculate number of columns based on screen width
-                      final screenWidth = constraints.maxWidth;
-                      final minCardWidth = 140.0; // Minimum width for each card
-                      final crossAxisCount = (screenWidth / minCardWidth).floor().clamp(1, 3);
-                      
-                      // Calculate aspect ratio based on available space
-                      final cardWidth = screenWidth / crossAxisCount - context.spacingL;
-                      final aspectRatio = cardWidth / (cardWidth * 0.9); // Slightly taller than square
-                      
-                      return GridView.count(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: context.spacingL,
-                        mainAxisSpacing: context.spacingL,
-                        childAspectRatio: aspectRatio,
-                        padding: EdgeInsets.only(bottom: context.spacingXL),
-                        children: [
-                          _buildFeatureCard(
-                            context,
-                            icon: IconlyBold.chart,
-                            title: 'EC Dashboard',
-                            subtitle: 'View student progress',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProfessorDashboardPage(),
-                              ),
-                            ),
-                          ),
-                          _buildFeatureCard(
-                            context,
-                            icon: IconlyBold.document,
-                            title: 'Support Event',
-                            subtitle: 'Add point opportunities',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SupportEventPage(),
-                              ),
-                            ),
-                          ),
-                          _buildFeatureCard(
-                            context,
-                            icon: IconlyBold.user_2,
-                            title: 'Attendance',
-                            subtitle: 'View student records',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AttendancePage(),
-                              ),
-                            ),
-                          ),
-                          _buildFeatureCard(
-                            context,
-                            icon: IconlyBold.download,
-                            title: 'Export Data',
-                            subtitle: 'Download reports',
-                            onTap: () => _showComingSoon(context, 'Export Data'),
-                          ),
-                          _buildFeatureCard(
-                            context,
-                            icon: IconlyBold.document,
-                            title: 'Manage Courses',
-                            subtitle: 'Add & manage classes',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const TeacherCourseManagementPage(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-
-                SizedBox(height: context.spacingXL),
-              ],
+        // Tab Bar
+        Container(
+          margin: EdgeInsets.symmetric(
+            horizontal: context.spacingL,
+            vertical: context.spacingM,
+          ),
+          decoration: BoxDecoration(
+            color: context.secondaryLight,
+            borderRadius: BorderRadius.circular(context.radiusM),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            indicator: BoxDecoration(
+              color: context.accentNavy,
+              borderRadius: BorderRadius.circular(context.radiusM),
             ),
+            labelColor: Colors.white,
+            unselectedLabelColor: context.neutralBlack.withValues(alpha: 0.6),
+            labelStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            tabs: const [
+              Tab(
+                icon: Icon(IconlyBold.chart, size: 20),
+                text: 'Dashboard',
+              ),
+              Tab(
+                icon: Icon(IconlyBold.user_3, size: 20),
+                text: 'Partnerships',
+              ),
+              Tab(
+                icon: Icon(IconlyBold.user_2, size: 20),
+                text: 'Students',
+              ),
+              Tab(
+                icon: Icon(IconlyBold.document, size: 20),
+                text: 'Courses',
+              ),
+            ],
+          ),
+        ),
+
+        // Tab Views
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              // Dashboard Tab
+              const ProfessorDashboardPage(),
+              
+              // Partnerships Tab
+              const SupportEventPage(),
+              
+              // Students Tab
+              const AttendancePage(),
+              
+              // Courses Tab
+              const TeacherCourseManagementPage(),
+            ],
           ),
         ),
       ],
@@ -303,86 +299,4 @@ class TeacherPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.neutralWhite,
-        borderRadius: BorderRadius.circular(context.radiusL),
-        border: Border.all(
-          color: context.neutralGray.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(context.radiusL),
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.all(context.spacingL),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: context.accentNavy.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(context.radiusM),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 24,
-                    color: context.accentNavy,
-                  ),
-                ),
-                SizedBox(height: context.spacingM),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: context.neutralBlack,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: context.spacingXS),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: context.neutralBlack.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w400,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showComingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature - Coming Soon!'),
-        backgroundColor: context.accentNavy,
-      ),
-    );
-  }
 }
