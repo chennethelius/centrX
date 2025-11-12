@@ -164,6 +164,8 @@ class _ClubAdminLoginScreenState extends State<ClubAdminLoginScreen> {
                           errorMessage = 'Please enter a valid email address.';
                         } else if (e.toString().contains('too-many-requests')) {
                           errorMessage = 'Too many failed attempts. Please try again later.';
+                        } else if (e.toString().contains('permission-denied')) {
+                          errorMessage = 'Permission denied. Please contact support or check Firestore rules are deployed.';
                         }
 
                         ScaffoldMessenger.of(context).showSnackBar(
