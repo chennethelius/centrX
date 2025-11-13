@@ -19,63 +19,81 @@ class CalendarService {
 
     final userDocRef = _db.collection('users').doc(uid);
 
-    await for (final userSnap in userDocRef.snapshots()) {
-      final registered = List<String>.from(userSnap.data()?['events_registered'] ?? <dynamic>[]);
-
-      if (registered.isEmpty) {
-        yield <DateTime, List<Map<String, dynamic>>>{};
-        continue;
-      }
-
-      // Fetch event docs in parallel
-      final futures = registered.map((id) async {
-        // Try top-level events collection first
-        final top = await _db.collection('events').doc(id).get();
-        if (top.exists) return top;
-
-        // Fall back to collectionGroup search (events in subcollections, e.g. /clubs/{clubId}/events/{eventId})
-        final cg = await _db.collectionGroup('events').where('eventId', isEqualTo: id).limit(1).get();
-        if (cg.docs.isNotEmpty) return cg.docs.first;
-
-        return null;
-      }).toList();
-
-      final docs = await Future.wait(futures);
-
-      final Map<DateTime, List<Map<String, dynamic>>> grouped = {};
-
-      for (final doc in docs) {
-        if (doc == null) continue;
-        final data = doc.data() as Map<String, dynamic>;
-
-        // Expect eventDate as Firestore Timestamp
-        if (data['eventDate'] is Timestamp) {
-          final ts = data['eventDate'] as Timestamp;
-          final dt = ts.toDate();
-          final key = DateTime(dt.year, dt.month, dt.day);
-
-          final start = dt;
-          DateTime? end;
-          if (data['duration'] is int) {
-            end = start.add(Duration(minutes: data['duration'] as int));
-          } else if (data['endTime'] is Timestamp) {
-            end = (data['endTime'] as Timestamp).toDate();
-          }
-
-          grouped.putIfAbsent(key, () => []);
-          grouped[key]!.add({
-            'title': data['title'] ?? 'Untitled',
-            'startTime': start,
-            'endTime': end,
-            'location': data['location'] ?? '',
-            'clubId': data['clubId'] ?? '',
-            'eventId': data['eventId'] ?? doc.id,
-            'raw': data,
-          });
+    try {
+      await for (final userSnap in userDocRef.snapshots()) {
+        // Check if user is still authenticated (may have logged out during stream)
+        if (FirebaseAuth.instance.currentUser == null) {
+          yield <DateTime, List<Map<String, dynamic>>>{};
+          return;
         }
-      }
 
-      yield grouped;
+        // Check if document still exists
+        if (!userSnap.exists) {
+          yield <DateTime, List<Map<String, dynamic>>>{};
+          continue;
+        }
+
+        final registered = List<String>.from(userSnap.data()?['events_registered'] ?? <dynamic>[]);
+
+        if (registered.isEmpty) {
+          yield <DateTime, List<Map<String, dynamic>>>{};
+          continue;
+        }
+
+        // Fetch event docs in parallel
+        final futures = registered.map((id) async {
+          // Try top-level events collection first
+          final top = await _db.collection('events').doc(id).get();
+          if (top.exists) return top;
+
+          // Fall back to collectionGroup search (events in subcollections, e.g. /clubs/{clubId}/events/{eventId})
+          final cg = await _db.collectionGroup('events').where('eventId', isEqualTo: id).limit(1).get();
+          if (cg.docs.isNotEmpty) return cg.docs.first;
+
+          return null;
+        }).toList();
+
+        final docs = await Future.wait(futures);
+
+        final Map<DateTime, List<Map<String, dynamic>>> grouped = {};
+
+        for (final doc in docs) {
+          if (doc == null) continue;
+          final data = doc.data() as Map<String, dynamic>;
+
+          // Expect eventDate as Firestore Timestamp
+          if (data['eventDate'] is Timestamp) {
+            final ts = data['eventDate'] as Timestamp;
+            final dt = ts.toDate();
+            final key = DateTime(dt.year, dt.month, dt.day);
+
+            final start = dt;
+            DateTime? end;
+            if (data['duration'] is int) {
+              end = start.add(Duration(minutes: data['duration'] as int));
+            } else if (data['endTime'] is Timestamp) {
+              end = (data['endTime'] as Timestamp).toDate();
+            }
+
+            grouped.putIfAbsent(key, () => []);
+            grouped[key]!.add({
+              'title': data['title'] ?? 'Untitled',
+              'startTime': start,
+              'endTime': end,
+              'location': data['location'] ?? '',
+              'clubId': data['clubId'] ?? '',
+              'eventId': data['eventId'] ?? doc.id,
+              'raw': data,
+            });
+          }
+        }
+
+        yield grouped;
+      }
+    } catch (e) {
+      // Handle permission errors gracefully (e.g., user logged out)
+      // Silently return empty map instead of throwing
+      yield <DateTime, List<Map<String, dynamic>>>{};
     }
   }
 }

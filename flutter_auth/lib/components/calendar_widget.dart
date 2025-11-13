@@ -25,18 +25,35 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     super.initState();
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      _sub = _service.userEventsByDateStream().listen((map) {
-        if (!mounted) return;
-        setState(() {
-          _eventsByDate = map;
-          // if selected day becomes null or not in map, keep selection if possible
-          if (_selectedDay == null) {
-            _selectedDay = _focusedDay;
+      _sub = _service.userEventsByDateStream().listen(
+        (map) {
+          if (!mounted) return;
+          // Check if user is still authenticated
+          if (FirebaseAuth.instance.currentUser == null) {
+            _sub?.cancel();
+            return;
           }
-        });
-      }, onError: (err) {
-        debugPrint('CalendarService error: $err');
-      });
+          setState(() {
+            _eventsByDate = map;
+            // if selected day becomes null or not in map, keep selection if possible
+            if (_selectedDay == null) {
+              _selectedDay = _focusedDay;
+            }
+          });
+        },
+        onError: (err) {
+          // Only log non-permission errors (permission errors are expected on logout)
+          if (err.toString().contains('permission-denied')) {
+            // User logged out, silently handle
+            if (mounted) {
+              _sub?.cancel();
+            }
+          } else {
+            debugPrint('CalendarService error: $err');
+          }
+        },
+        cancelOnError: true,
+      );
     } else {
       debugPrint('No user signed in - calendar inactive.');
     }

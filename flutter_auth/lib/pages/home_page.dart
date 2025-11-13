@@ -6,6 +6,8 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter_auth/components/calendar_widget.dart';
 import 'package:flutter_auth/components/class_enrollment_widget.dart';
 import 'package:flutter_auth/theme/theme_extensions.dart';
+import 'package:flutter_auth/services/auth_service.dart';
+import 'package:flutter_auth/login/new_login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -82,6 +84,8 @@ class _HomePageState extends State<HomePage> {
                     _buildClassEnrollmentSection(uid!),
                     SizedBox(height: context.spacingXL),
                   ],
+                  _buildLogoutButton(),
+                  SizedBox(height: context.spacingXL),
                 ],
               ),
             ),
@@ -290,5 +294,74 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildLogoutButton() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? context.spacingL : context.spacingXL),
+      child: ElevatedButton.icon(
+        onPressed: () => _showLogoutDialog(),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: context.errorRed,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(
+            horizontal: context.spacingXL,
+            vertical: context.spacingM,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(context.radiusL),
+          ),
+          elevation: 0,
+        ),
+        icon: const Icon(IconlyBold.logout, size: 20),
+        label: const Text(
+          'Sign Out',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showLogoutDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: context.neutralBlack.withValues(alpha: 0.6)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: context.errorRed,
+            ),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await AuthService().signOut();
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const NewLoginPage()),
+          (route) => false,
+        );
+      }
+    }
   }
 }
