@@ -72,8 +72,12 @@ service cloud.firestore {
     // ============================================
     match /club_partnerships/{partnershipId} {
       // Teachers can read their own partnerships
+      // Clubs can read partnerships where they are the clubId
+      // Admins can read all
       allow read: if request.auth != null && 
-                 (resource.data.teacherId == request.auth.uid || isAdmin());
+                 (resource.data.teacherId == request.auth.uid || 
+                  resource.data.clubId == request.auth.uid || 
+                  isAdmin());
       
       // Teachers can create partnerships
       allow create: if request.auth != null && 
