@@ -12,6 +12,7 @@ import '../services/event_service.dart';
 import '../services/partnership_service.dart';
 import '../models/partnership.dart';
 import '../services/auth_service.dart';
+import '../login/new_login_page.dart';
 
 class ClubPage extends StatefulWidget {
   const ClubPage({super.key});
@@ -90,28 +91,32 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.neutralWhite,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildTabBar(),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOverviewTab(),
-                  _buildEventsTab(),
-                  _buildAnalyticsTab(),
-                  _buildPartnershipsTab(),
-                ],
+    return PopScope(
+      canPop: false, // Prevent back navigation
+      child: Scaffold(
+        backgroundColor: context.neutralWhite,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(), // Prevent swipe navigation
+                  children: [
+                    _buildOverviewTab(),
+                    _buildEventsTab(),
+                    _buildAnalyticsTab(),
+                    _buildPartnershipsTab(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        floatingActionButton: _buildFloatingActionButton(),
       ),
-      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
@@ -133,13 +138,7 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              IconlyBold.arrow_left_2,
-              color: context.neutralBlack,
-            ),
-          ),
+          SizedBox(width: 48), // Balance space
           const Spacer(),
           Text(
             'centrX',
@@ -152,16 +151,7 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
           ),
           const Spacer(),
           IconButton(
-            onPressed: () async {
-              await AuthService().signOut();
-              if (context.mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
-              }
-            },
+            onPressed: () => _showLogoutDialog(),
             icon: Icon(
               IconlyBold.logout,
               color: context.neutralBlack,
@@ -170,6 +160,43 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
         ],
       ),
     );
+  }
+
+  Future<void> _showLogoutDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: context.neutralBlack.withValues(alpha: 0.6)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: context.errorRed,
+            ),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      // Navigate first to prevent queries from continuing
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const NewLoginPage()),
+        (route) => false,
+      );
+      // Then sign out (this happens after navigation)
+      await AuthService().signOut();
+    }
   }
 
   Widget _buildTabBar() {
@@ -244,6 +271,8 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
           _buildQuickStats(),
           SizedBox(height: context.spacingXL),
           _buildRecentActivity(),
+          SizedBox(height: context.spacingXL),
+          _buildLogoutButton(),
         ],
       ),
     );
@@ -469,98 +498,112 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildUpcomingEventsList() {
-    return StreamBuilder<List<Event>>(
-      stream: _fetchUpcomingEvents(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<List<Event>>(
+            stream: _fetchUpcomingEvents(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  IconlyBold.calendar,
-                  size: 64,
-                  color: context.neutralGray,
-                ),
-                SizedBox(height: context.spacingL),
-                Text(
-                  'No upcoming events',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.neutralBlack.withValues(alpha: 0.7),
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        IconlyBold.calendar,
+                        size: 64,
+                        color: context.neutralGray,
+                      ),
+                      SizedBox(height: context.spacingL),
+                      Text(
+                        'No upcoming events',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: context.neutralBlack.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      SizedBox(height: context.spacingS),
+                      Text(
+                        'Create an event to get started',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: context.neutralBlack.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                SizedBox(height: context.spacingS),
-                Text(
-                  'Create an event to get started',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: context.neutralBlack.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
+                );
+              }
 
-        return ListView.builder(
-          padding: EdgeInsets.all(context.spacingL),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            final event = snapshot.data![index];
-            return _buildEventCardWithActions(event);
-          },
-        );
-      },
+              return ListView.builder(
+                padding: EdgeInsets.all(context.spacingL),
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final event = snapshot.data![index];
+                  return _buildEventCardWithActions(event);
+                },
+              );
+            },
+          ),
+        ),
+        _buildLogoutButton(),
+      ],
     );
   }
 
   Widget _buildPastEventsList() {
-    return StreamBuilder<List<Event>>(
-      stream: _fetchPastEvents(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<List<Event>>(
+            stream: _fetchPastEvents(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  IconlyBold.calendar,
-                  size: 64,
-                  color: context.neutralGray,
-                ),
-                SizedBox(height: context.spacingL),
-                Text(
-                  'No past events',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.neutralBlack.withValues(alpha: 0.7),
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        IconlyBold.calendar,
+                        size: 64,
+                        color: context.neutralGray,
+                      ),
+                      SizedBox(height: context.spacingL),
+                      Text(
+                        'No past events',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: context.neutralBlack.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          );
-        }
+                );
+              }
 
-        return ListView.builder(
-          padding: EdgeInsets.all(context.spacingL),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            final event = snapshot.data![index];
-            return _buildEventCardWithActions(event, showEdit: false);
-          },
-        );
-      },
+              return ListView.builder(
+                padding: EdgeInsets.all(context.spacingL),
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final event = snapshot.data![index];
+                  return _buildEventCardWithActions(event, showEdit: false);
+                },
+              );
+            },
+          ),
+        ),
+        _buildLogoutButton(),
+      ],
     );
   }
 
@@ -809,6 +852,8 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
               );
             },
           ),
+          SizedBox(height: context.spacingXL),
+          _buildLogoutButton(),
         ],
       ),
     );
@@ -906,88 +951,120 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
 
     return FutureBuilder<List<Partnership>>(
       future: PartnershipService.getClubPartnerships(clubId).catchError((error) {
-        debugPrint('Error loading partnerships: $error');
+        // Only log error if user is still authenticated (not logging out)
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null) {
+          debugPrint('Error loading partnerships: $error');
+        }
+        // Suppress errors during logout
         return <Partnership>[]; // Return empty list on error
       }),
       builder: (context, snapshot) {
+        // Check if user is still authenticated
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser == null) {
+          // User logged out, don't show error
+          return const SizedBox.shrink();
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  IconlyBold.info_circle,
-                  size: 64,
-                  color: context.neutralGray,
-                ),
-                SizedBox(height: context.spacingL),
-                Text(
-                  'Unable to load partnerships',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.neutralBlack.withValues(alpha: 0.7),
+          return Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        IconlyBold.info_circle,
+                        size: 64,
+                        color: context.neutralGray,
+                      ),
+                      SizedBox(height: context.spacingL),
+                      Text(
+                        'Unable to load partnerships',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: context.neutralBlack.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      SizedBox(height: context.spacingS),
+                      Text(
+                        'Partnerships will appear here when\nteachers create them with your club',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: context.neutralBlack.withValues(alpha: 0.5),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: context.spacingS),
-                Text(
-                  'Partnerships will appear here when\nteachers create them with your club',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: context.neutralBlack.withValues(alpha: 0.5),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+              ),
+              _buildLogoutButton(),
+            ],
           );
         }
 
         final partnerships = snapshot.data ?? [];
 
         if (partnerships.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  IconlyBold.user_3,
-                  size: 64,
-                  color: context.neutralGray,
-                ),
-                SizedBox(height: context.spacingL),
-                Text(
-                  'No partnerships yet',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.neutralBlack.withValues(alpha: 0.7),
+          return Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        IconlyBold.user_3,
+                        size: 64,
+                        color: context.neutralGray,
+                      ),
+                      SizedBox(height: context.spacingL),
+                      Text(
+                        'No partnerships yet',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: context.neutralBlack.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      SizedBox(height: context.spacingS),
+                      Text(
+                        'Teachers can create partnerships with your club\nfor extra credit opportunities',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: context.neutralBlack.withValues(alpha: 0.5),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: context.spacingS),
-                Text(
-                  'Teachers can create partnerships with your club\nfor extra credit opportunities',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: context.neutralBlack.withValues(alpha: 0.5),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+              ),
+              _buildLogoutButton(),
+            ],
           );
         }
 
-        return ListView.builder(
-          padding: EdgeInsets.all(context.spacingL),
-          itemCount: partnerships.length,
-          itemBuilder: (context, index) {
-            return _buildPartnershipCard(partnerships[index]);
-          },
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.all(context.spacingL),
+                itemCount: partnerships.length,
+                itemBuilder: (context, index) {
+                  return _buildPartnershipCard(partnerships[index]);
+                },
+              ),
+            ),
+            _buildLogoutButton(),
+          ],
         );
       },
     );
@@ -1126,6 +1203,34 @@ class _ClubPageState extends State<ClubPage> with SingleTickerProviderStateMixin
       context,
       MaterialPageRoute(
         builder: (context) => EditEventPage(event: event),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return Container(
+      margin: EdgeInsets.all(context.spacingL),
+      child: ElevatedButton.icon(
+        onPressed: () => _showLogoutDialog(),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: context.errorRed,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(
+            horizontal: context.spacingXL,
+            vertical: context.spacingM,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(context.radiusL),
+          ),
+        ),
+        icon: const Icon(IconlyBold.logout, size: 20),
+        label: const Text(
+          'Sign Out',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
