@@ -216,46 +216,67 @@ class _TeacherPageState extends State<TeacherPage> with SingleTickerProviderStat
         ),
 
         // Tab Bar
-        Container(
-          margin: EdgeInsets.symmetric(
-            horizontal: context.spacingL,
-            vertical: context.spacingM,
-          ),
-          decoration: BoxDecoration(
-            color: context.secondaryLight,
-            borderRadius: BorderRadius.circular(context.radiusM),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            indicator: BoxDecoration(
-              color: context.accentNavy,
-              borderRadius: BorderRadius.circular(context.radiusM),
-            ),
-            labelColor: Colors.white,
-            unselectedLabelColor: context.neutralBlack.withValues(alpha: 0.6),
-            labelStyle: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-            tabs: const [
-              Tab(
-                icon: Icon(IconlyBold.chart, size: 20),
-                text: 'Dashboard',
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isSmallScreen = screenWidth < 600;
+            
+            return Container(
+              margin: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? context.spacingM : context.spacingL,
+                vertical: context.spacingM,
               ),
-              Tab(
-                icon: Icon(IconlyBold.user_3, size: 20),
-                text: 'Partnerships',
+              decoration: BoxDecoration(
+                color: context.secondaryLight,
+                borderRadius: BorderRadius.circular(context.radiusM),
               ),
-              Tab(
-                icon: Icon(IconlyBold.user_2, size: 20),
-                text: 'Students',
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: context.accentNavy,
+                  borderRadius: BorderRadius.circular(context.radiusM),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: context.neutralBlack.withValues(alpha: 0.6),
+                tabs: [
+                  Tab(
+                    icon: Icon(
+                      IconlyBold.chart,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                    iconMargin: EdgeInsets.zero,
+                    height: isSmallScreen ? 44 : 48,
+                  ),
+                  Tab(
+                    icon: Icon(
+                      IconlyBold.user_3,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                    iconMargin: EdgeInsets.zero,
+                    height: isSmallScreen ? 44 : 48,
+                  ),
+                  Tab(
+                    icon: Icon(
+                      IconlyBold.user_2,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                    iconMargin: EdgeInsets.zero,
+                    height: isSmallScreen ? 44 : 48,
+                  ),
+                  Tab(
+                    icon: Icon(
+                      IconlyBold.document,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                    iconMargin: EdgeInsets.zero,
+                    height: isSmallScreen ? 44 : 48,
+                  ),
+                ],
               ),
-              Tab(
-                icon: Icon(IconlyBold.document, size: 20),
-                text: 'Courses',
-              ),
-            ],
-          ),
+            );
+          },
         ),
 
         // Tab Views
