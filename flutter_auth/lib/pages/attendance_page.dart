@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:iconly/iconly.dart';
 import '../theme/theme_extensions.dart';
 import '../models/event.dart';
@@ -98,112 +99,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
             // Events List
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('events')
-                    .where('eventDate', isLessThan: Timestamp.now())
-                    .orderBy('eventDate', descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error loading events',
-                        style: TextStyle(
-                          color: context.errorRed,
-                          fontSize: 16,
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            IconlyBold.calendar,
-                            size: 64,
-                            color: context.neutralGray,
-                          ),
-                          SizedBox(height: context.spacingL),
-                          Text(
-                            'No past events',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: context.neutralBlack.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          SizedBox(height: context.spacingS),
-                          Text(
-                            'Event attendance records will appear here',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: context.neutralBlack.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final events = snapshot.data!.docs
-                      .map((doc) => Event.fromJson(doc.data() as Map<String, dynamic>, doc.id))
-                      .where((event) {
-                    if (_searchQuery.isEmpty) return true;
-                    return event.title.toLowerCase().contains(_searchQuery) ||
-                           event.clubname.toLowerCase().contains(_searchQuery) ||
-                           event.description.toLowerCase().contains(_searchQuery);
-                  }).toList();
-
-                  if (events.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            IconlyBold.search,
-                            size: 64,
-                            color: context.neutralGray,
-                          ),
-                          SizedBox(height: context.spacingL),
-                          Text(
-                            'No events found',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: context.neutralBlack.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          SizedBox(height: context.spacingS),
-                          Text(
-                            'Try adjusting your search terms',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: context.neutralBlack.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      return _buildEventCard(context, event);
-                    },
-                  );
-                },
-              ),
+              child: _buildEventsList(),
             ),
           ],
         ),
@@ -367,6 +263,231 @@ class _AttendancePageState extends State<AttendancePage> {
         ),
       ),
     );
+  }
+
+  Widget _buildEventsList() {
+    final user = FirebaseAuth.instance.currentUser;
+    
+    // Demo mode: show mock data
+    if (user == null) {
+      final mockEvents = _getMockPastEvents();
+      final filteredEvents = mockEvents.where((event) {
+        if (_searchQuery.isEmpty) return true;
+        return event.title.toLowerCase().contains(_searchQuery) ||
+               event.clubname.toLowerCase().contains(_searchQuery) ||
+               event.description.toLowerCase().contains(_searchQuery);
+      }).toList();
+
+      if (filteredEvents.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                IconlyBold.search,
+                size: 64,
+                color: context.neutralGray,
+              ),
+              SizedBox(height: context.spacingL),
+              Text(
+                'No events found',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: context.neutralBlack.withValues(alpha: 0.7),
+                ),
+              ),
+              SizedBox(height: context.spacingS),
+              Text(
+                'Try adjusting your search terms',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: context.neutralBlack.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return ListView.builder(
+        padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+        itemCount: filteredEvents.length,
+        itemBuilder: (context, index) {
+          final event = filteredEvents[index];
+          return _buildEventCard(context, event);
+        },
+      );
+    }
+
+    // Real mode: query Firestore
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('events')
+          .where('eventDate', isLessThan: Timestamp.now())
+          .orderBy('eventDate', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading events',
+              style: TextStyle(
+                color: context.errorRed,
+                fontSize: 16,
+              ),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  IconlyBold.calendar,
+                  size: 64,
+                  color: context.neutralGray,
+                ),
+                SizedBox(height: context.spacingL),
+                Text(
+                  'No past events',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: context.neutralBlack.withValues(alpha: 0.7),
+                  ),
+                ),
+                SizedBox(height: context.spacingS),
+                Text(
+                  'Event attendance records will appear here',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.neutralBlack.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final events = snapshot.data!.docs
+            .map((doc) => Event.fromJson(doc.data() as Map<String, dynamic>, doc.id))
+            .where((event) {
+          if (_searchQuery.isEmpty) return true;
+          return event.title.toLowerCase().contains(_searchQuery) ||
+                 event.clubname.toLowerCase().contains(_searchQuery) ||
+                 event.description.toLowerCase().contains(_searchQuery);
+        }).toList();
+
+        if (events.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  IconlyBold.search,
+                  size: 64,
+                  color: context.neutralGray,
+                ),
+                SizedBox(height: context.spacingL),
+                Text(
+                  'No events found',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: context.neutralBlack.withValues(alpha: 0.7),
+                  ),
+                ),
+                SizedBox(height: context.spacingS),
+                Text(
+                  'Try adjusting your search terms',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.neutralBlack.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+          itemCount: events.length,
+          itemBuilder: (context, index) {
+            final event = events[index];
+            return _buildEventCard(context, event);
+          },
+        );
+      },
+    );
+  }
+
+  /// Mock past events for demo mode
+  List<Event> _getMockPastEvents() {
+    final now = DateTime.now();
+    return [
+      Event(
+        eventId: 'demo_event_1',
+        ownerId: 'demo_club_1',
+        clubname: 'Economics Student Association',
+        title: 'Microeconomics Workshop',
+        description: 'Learn the fundamentals of supply and demand, market equilibrium, and consumer behavior in this interactive workshop.',
+        location: 'Business School, Room 201',
+        createdAt: now.subtract(const Duration(days: 10)),
+        eventDate: now.subtract(const Duration(days: 5)),
+        durationMinutes: 90,
+        isQrEnabled: true,
+        likeCount: 12,
+        commentCount: 5,
+        isRsvped: false,
+        mediaUrls: [],
+        attendanceList: ['demo_student_1', 'demo_student_2', 'demo_student_3', 'demo_student_4', 'demo_student_5'],
+        rsvpList: ['demo_student_1', 'demo_student_2', 'demo_student_3', 'demo_student_4', 'demo_student_5', 'demo_student_6'],
+      ),
+      Event(
+        eventId: 'demo_event_2',
+        ownerId: 'demo_club_2',
+        clubname: 'Business Analytics Club',
+        title: 'Data Analysis Seminar',
+        description: 'Explore data visualization techniques and statistical analysis methods used in modern business analytics.',
+        location: 'Library, Conference Room B',
+        createdAt: now.subtract(const Duration(days: 8)),
+        eventDate: now.subtract(const Duration(days: 3)),
+        durationMinutes: 120,
+        isQrEnabled: true,
+        likeCount: 18,
+        commentCount: 8,
+        isRsvped: false,
+        mediaUrls: [],
+        attendanceList: ['demo_student_2', 'demo_student_3', 'demo_student_6', 'demo_student_7'],
+        rsvpList: ['demo_student_2', 'demo_student_3', 'demo_student_6', 'demo_student_7', 'demo_student_8'],
+      ),
+      Event(
+        eventId: 'demo_event_3',
+        ownerId: 'demo_club_1',
+        clubname: 'Economics Student Association',
+        title: 'Guest Speaker: Market Trends',
+        description: 'Join us for an insightful talk by industry expert on current economic trends and their impact on global markets.',
+        location: 'Auditorium, Main Hall',
+        createdAt: now.subtract(const Duration(days: 15)),
+        eventDate: now.subtract(const Duration(days: 7)),
+        durationMinutes: 60,
+        isQrEnabled: true,
+        likeCount: 25,
+        commentCount: 12,
+        isRsvped: false,
+        mediaUrls: [],
+        attendanceList: ['demo_student_1', 'demo_student_4', 'demo_student_5', 'demo_student_6', 'demo_student_7', 'demo_student_8'],
+        rsvpList: ['demo_student_1', 'demo_student_4', 'demo_student_5', 'demo_student_6', 'demo_student_7', 'demo_student_8'],
+      ),
+    ];
   }
 
   void _showAttendanceDetails(BuildContext context, Event event) {
@@ -552,6 +673,64 @@ class _AttendanceDetailsSheet extends StatelessWidget {
   }
 
   Widget _buildAttendeeItem(BuildContext context, String attendeeId) {
+    final user = FirebaseAuth.instance.currentUser;
+    
+    // Demo mode: show mock attendee data
+    if (user == null) {
+      final mockAttendee = _getMockAttendee(attendeeId);
+      return Container(
+        padding: EdgeInsets.symmetric(vertical: context.spacingM),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: context.neutralGray.withValues(alpha: 0.1),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: context.accentNavy.withValues(alpha: 0.1),
+              child: Text(
+                '${mockAttendee['firstName']?[0] ?? 'U'}${mockAttendee['lastName']?[0] ?? 'S'}'.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: context.accentNavy,
+                ),
+              ),
+            ),
+            SizedBox(width: context.spacingM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${mockAttendee['firstName'] ?? 'Unknown'} ${mockAttendee['lastName'] ?? 'Student'}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: context.neutralBlack,
+                    ),
+                  ),
+                  Text(
+                    mockAttendee['email'] ?? 'unknown@slu.edu',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: context.neutralBlack.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Real mode: query Firestore
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
           .collection('users')
@@ -640,6 +819,21 @@ class _AttendanceDetailsSheet extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Get mock attendee data by ID
+  Map<String, String> _getMockAttendee(String attendeeId) {
+    final mockAttendees = <String, Map<String, String>>{
+      'demo_student_1': {'firstName': 'Sarah', 'lastName': 'Johnson', 'email': 'sarah.johnson@slu.edu'},
+      'demo_student_2': {'firstName': 'Michael', 'lastName': 'Chen', 'email': 'michael.chen@slu.edu'},
+      'demo_student_3': {'firstName': 'Emily', 'lastName': 'Rodriguez', 'email': 'emily.rodriguez@slu.edu'},
+      'demo_student_4': {'firstName': 'James', 'lastName': 'Williams', 'email': 'james.williams@slu.edu'},
+      'demo_student_5': {'firstName': 'Olivia', 'lastName': 'Martinez', 'email': 'olivia.martinez@slu.edu'},
+      'demo_student_6': {'firstName': 'David', 'lastName': 'Brown', 'email': 'david.brown@slu.edu'},
+      'demo_student_7': {'firstName': 'Sophia', 'lastName': 'Davis', 'email': 'sophia.davis@slu.edu'},
+      'demo_student_8': {'firstName': 'Daniel', 'lastName': 'Garcia', 'email': 'daniel.garcia@slu.edu'},
+    };
+    return mockAttendees[attendeeId] ?? {'firstName': 'Unknown', 'lastName': 'Student', 'email': 'unknown@slu.edu'};
   }
 
   void _exportToCsv(BuildContext context, Event event) {
