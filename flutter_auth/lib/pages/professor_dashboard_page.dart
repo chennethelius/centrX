@@ -115,10 +115,13 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   }
 
   Widget _buildHeader() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: context.spacingL,
-        vertical: context.spacingM,
+        horizontal: isSmallScreen ? context.spacingM : context.spacingL,
+        vertical: isSmallScreen ? context.spacingS : context.spacingM,
       ),
       decoration: BoxDecoration(
         color: context.neutralWhite,
@@ -132,33 +135,16 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              IconlyBold.arrow_left_2,
-              color: context.neutralBlack,
-            ),
-          ),
+          SizedBox(width: isSmallScreen ? 0 : context.spacingL),
           const Spacer(),
-          Column(
-            children: [
-              Text(
-                'Extra Credit Dashboard',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: context.neutralBlack,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              Text(
-                'Track student engagement',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.neutralBlack.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
+          Text(
+            'Extra Credit Dashboard',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 18 : 20,
+              fontWeight: FontWeight.w700,
+              color: context.neutralBlack,
+              letterSpacing: -0.5,
+            ),
           ),
           const Spacer(),
           IconButton(
@@ -166,6 +152,12 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
             icon: Icon(
               IconlyBold.download,
               color: context.accentNavy,
+              size: isSmallScreen ? 20 : 24,
+            ),
+            padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+            constraints: BoxConstraints(
+              minWidth: isSmallScreen ? 36 : 48,
+              minHeight: isSmallScreen ? 36 : 48,
             ),
           ),
         ],
@@ -240,9 +232,15 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   Widget _buildCourseSelector() {
     if (_teachingCourses.isEmpty) return const SizedBox.shrink();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+
     return Container(
-      margin: EdgeInsets.all(context.spacingL),
-      padding: EdgeInsets.symmetric(horizontal: context.spacingM),
+      margin: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? context.spacingS : context.spacingM,
+        vertical: isSmallScreen ? context.spacingXS : context.spacingS,
+      ),
       decoration: BoxDecoration(
         color: context.secondaryLight,
         borderRadius: BorderRadius.circular(context.radiusL),
@@ -254,7 +252,11 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
         value: _selectedCourseId,
         isExpanded: true,
         underline: const SizedBox.shrink(),
-        icon: Icon(IconlyBold.arrow_down_2, color: context.neutralBlack),
+        icon: Icon(
+          IconlyBold.arrow_down_2,
+          color: context.neutralBlack,
+          size: isSmallScreen ? 18 : 20,
+        ),
         items: _teachingCourses.map((course) {
           final courseCode = course['courseCode'] ?? 'Unknown';
           final courseName = course['courseName'] ?? 'Unknown Course';
@@ -265,23 +267,28 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '$courseCode${section.isNotEmpty ? ' - $section' : ''}',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: isSmallScreen ? 14 : 16,
                     fontWeight: FontWeight.w600,
                     color: context.neutralBlack,
                   ),
                 ),
-                Text(
-                  courseName,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: context.neutralBlack.withValues(alpha: 0.6),
+                if (!isSmallScreen) ...[
+                  SizedBox(height: context.spacingXS / 2),
+                  Text(
+                    courseName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.neutralBlack.withValues(alpha: 0.6),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ],
               ],
             ),
           );
@@ -296,8 +303,14 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   }
 
   Widget _buildTabBar() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: context.spacingL),
+      margin: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? context.spacingM : context.spacingL,
+        vertical: isSmallScreen ? context.spacingXS : context.spacingS,
+      ),
       decoration: BoxDecoration(
         color: context.secondaryLight,
         borderRadius: BorderRadius.circular(context.radiusM),
@@ -308,10 +321,12 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           color: context.accentNavy,
           borderRadius: BorderRadius.circular(context.radiusM),
         ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
         labelColor: Colors.white,
         unselectedLabelColor: context.neutralBlack.withValues(alpha: 0.6),
-        labelStyle: const TextStyle(
-          fontSize: 14,
+        labelStyle: TextStyle(
+          fontSize: isSmallScreen ? 13 : 14,
           fontWeight: FontWeight.w600,
         ),
         tabs: const [
@@ -350,8 +365,11 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
 
             final students = studentSnapshot.data!;
 
+            final screenWidth = MediaQuery.of(context).size.width;
+            final isSmallScreen = screenWidth < 600;
+            
             return ListView.builder(
-              padding: EdgeInsets.all(context.spacingL),
+              padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
               itemCount: students.length,
               itemBuilder: (context, index) {
                 final student = students[index];
@@ -460,9 +478,12 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     final email = student['email'] as String;
     final points = student['points'] as int;
     final ecPercent = student['extraCreditPercent'] as double;
+    
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
 
     return Container(
-      margin: EdgeInsets.only(bottom: context.spacingM),
+      margin: EdgeInsets.only(bottom: isSmallScreen ? context.spacingS : context.spacingM),
       decoration: BoxDecoration(
         color: context.neutralWhite,
         borderRadius: BorderRadius.circular(context.radiusL),
@@ -483,79 +504,81 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           borderRadius: BorderRadius.circular(context.radiusL),
           onTap: () => _showStudentDetails(student),
           child: Padding(
-            padding: EdgeInsets.all(context.spacingL),
+            padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
             child: Row(
               children: [
                 // Avatar
                 CircleAvatar(
-                  radius: 28,
+                  radius: isSmallScreen ? 24 : 28,
                   backgroundColor: context.accentNavy.withValues(alpha: 0.1),
                   child: Text(
                     '${firstName[0]}${lastName[0]}'.toUpperCase(),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isSmallScreen ? 16 : 18,
                       fontWeight: FontWeight.w600,
                       color: context.accentNavy,
                     ),
                   ),
                 ),
-                SizedBox(width: context.spacingM),
+                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
 
                 // Student info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         '$firstName $lastName',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: isSmallScreen ? 14 : 16,
                           fontWeight: FontWeight.w600,
                           color: context.neutralBlack,
                         ),
-                      ),
-                      SizedBox(height: context.spacingXS),
-                      Text(
-                        email,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: context.neutralBlack.withValues(alpha: 0.6),
-                        ),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: context.spacingS),
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: context.spacingS,
-                              vertical: context.spacingXS,
-                            ),
-                            decoration: BoxDecoration(
-                              color: context.infoBlue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(context.radiusS),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  IconlyBold.star,
-                                  size: 12,
-                                  color: context.infoBlue,
-                                ),
-                                SizedBox(width: context.spacingXS),
-                                Text(
-                                  '$points pts',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.infoBlue,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      if (!isSmallScreen) ...[
+                        SizedBox(height: context.spacingXS),
+                        Text(
+                          email,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: context.neutralBlack.withValues(alpha: 0.6),
                           ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                      SizedBox(height: isSmallScreen ? context.spacingXS : context.spacingS),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? context.spacingXS : context.spacingS,
+                          vertical: isSmallScreen ? 2 : context.spacingXS,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.infoBlue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(context.radiusS),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              IconlyBold.star,
+                              size: isSmallScreen ? 10 : 12,
+                              color: context.infoBlue,
+                            ),
+                            SizedBox(width: context.spacingXS / 2),
+                            Text(
+                              '$points pts',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 11 : 12,
+                                fontWeight: FontWeight.w600,
+                                color: context.infoBlue,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -564,8 +587,8 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                 // EC Display
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: context.spacingM,
-                    vertical: context.spacingS,
+                    horizontal: isSmallScreen ? context.spacingS : context.spacingM,
+                    vertical: isSmallScreen ? context.spacingXS : context.spacingS,
                   ),
                   decoration: BoxDecoration(
                     color: ecPercent > 0 
@@ -574,33 +597,35 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                     borderRadius: BorderRadius.circular(context.radiusM),
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${ecPercent.toStringAsFixed(2)}%',
+                        '${ecPercent.toStringAsFixed(isSmallScreen ? 1 : 2)}%',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: isSmallScreen ? 18 : 24,
                           fontWeight: FontWeight.w700,
                           color: ecPercent > 0 
                               ? context.successGreen
                               : context.neutralBlack.withValues(alpha: 0.5),
                         ),
                       ),
-                      Text(
-                        'Extra Credit',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: context.neutralBlack.withValues(alpha: 0.6),
+                      if (!isSmallScreen)
+                        Text(
+                          'EC',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: context.neutralBlack.withValues(alpha: 0.6),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
 
-                SizedBox(width: context.spacingM),
+                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
                 Icon(
                   IconlyLight.arrow_right_2,
                   color: context.neutralGray,
-                  size: 20,
+                  size: isSmallScreen ? 18 : 20,
                 ),
               ],
             ),
@@ -611,29 +636,23 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   }
 
   Widget _buildSettingsTab() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return SingleChildScrollView(
-      padding: EdgeInsets.all(context.spacingL),
+      padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Extra Credit Conversion',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: isSmallScreen ? 18 : 20,
               fontWeight: FontWeight.w700,
               color: context.neutralBlack,
             ),
           ),
-          SizedBox(height: context.spacingM),
-          Text(
-            'Configure how student points convert to extra credit percentage',
-            style: TextStyle(
-              fontSize: 14,
-              color: context.neutralBlack.withValues(alpha: 0.6),
-              height: 1.5,
-            ),
-          ),
-          SizedBox(height: context.spacingXL),
+          SizedBox(height: isSmallScreen ? context.spacingL : context.spacingXL),
 
           // Points per percent
           _buildSettingCard(
@@ -644,7 +663,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
             onTap: () => _editPointsPerPercent(),
           ),
 
-          SizedBox(height: context.spacingL),
+          SizedBox(height: isSmallScreen ? context.spacingM : context.spacingL),
 
           // Max EC
           _buildSettingCard(
@@ -655,11 +674,11 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
             onTap: () => _editMaxExtraCredit(),
           ),
 
-          SizedBox(height: context.spacingXXL),
+          SizedBox(height: isSmallScreen ? context.spacingXL : context.spacingXXL),
 
           // Example calculation
           Container(
-            padding: EdgeInsets.all(context.spacingL),
+            padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
             decoration: BoxDecoration(
               color: context.infoBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(context.radiusL),
@@ -675,42 +694,34 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                     Icon(
                       IconlyBold.info_circle,
                       color: context.infoBlue,
-                      size: 20,
+                      size: isSmallScreen ? 18 : 20,
                     ),
-                    SizedBox(width: context.spacingM),
+                    SizedBox(width: context.spacingS),
                     Text(
-                      'Example Calculation',
+                      'Example',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: isSmallScreen ? 14 : 16,
                         fontWeight: FontWeight.w600,
                         color: context.infoBlue,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: context.spacingM),
+                SizedBox(height: isSmallScreen ? context.spacingS : context.spacingM),
                 Text(
-                  'A student with 25 points would earn:',
+                  '25 pts ÷ $_pointsPerPercent = ${(25 / _pointsPerPercent).toStringAsFixed(2)}%',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: context.neutralBlack.withValues(alpha: 0.8),
-                  ),
-                ),
-                SizedBox(height: context.spacingS),
-                Text(
-                  '25 pts ÷ $_pointsPerPercent = ${(25 / _pointsPerPercent).toStringAsFixed(2)}% extra credit',
-                  style: TextStyle(
-                    fontSize: 16,
+                    fontSize: isSmallScreen ? 14 : 16,
                     fontWeight: FontWeight.w600,
                     color: context.neutralBlack,
                   ),
                 ),
                 if ((25 / _pointsPerPercent) > _maxExtraCreditPercent) ...[
-                  SizedBox(height: context.spacingS),
+                  SizedBox(height: context.spacingXS),
                   Text(
                     'Capped at ${_maxExtraCreditPercent.toStringAsFixed(1)}%',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: isSmallScreen ? 12 : 14,
                       color: context.warningOrange,
                       fontWeight: FontWeight.w600,
                     ),
@@ -731,6 +742,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     required String value,
     required VoidCallback onTap,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Container(
       decoration: BoxDecoration(
         color: context.neutralWhite,
@@ -752,12 +766,12 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           borderRadius: BorderRadius.circular(context.radiusL),
           onTap: onTap,
           child: Padding(
-            padding: EdgeInsets.all(context.spacingL),
+            padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: isSmallScreen ? 40 : 48,
+                  height: isSmallScreen ? 40 : 48,
                   decoration: BoxDecoration(
                     color: context.accentNavy.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(context.radiusM),
@@ -765,37 +779,42 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                   child: Icon(
                     icon,
                     color: context.accentNavy,
-                    size: 24,
+                    size: isSmallScreen ? 20 : 24,
                   ),
                 ),
-                SizedBox(width: context.spacingM),
+                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         title,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: isSmallScreen ? 14 : 16,
                           fontWeight: FontWeight.w600,
                           color: context.neutralBlack,
                         ),
                       ),
-                      SizedBox(height: context.spacingXS),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: context.neutralBlack.withValues(alpha: 0.6),
+                      if (!isSmallScreen) ...[
+                        SizedBox(height: context.spacingXS),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: context.neutralBlack.withValues(alpha: 0.6),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: context.spacingM,
-                    vertical: context.spacingS,
+                    horizontal: isSmallScreen ? context.spacingS : context.spacingM,
+                    vertical: isSmallScreen ? context.spacingXS : context.spacingS,
                   ),
                   decoration: BoxDecoration(
                     color: context.secondaryLight,
@@ -804,16 +823,17 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                   child: Text(
                     value,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: isSmallScreen ? 14 : 16,
                       fontWeight: FontWeight.w600,
                       color: context.neutralBlack,
                     ),
                   ),
                 ),
-                SizedBox(width: context.spacingM),
+                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
                 Icon(
                   IconlyLight.arrow_right_2,
                   color: context.neutralGray,
+                  size: isSmallScreen ? 18 : 20,
                 ),
               ],
             ),
