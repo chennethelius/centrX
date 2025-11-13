@@ -153,112 +153,228 @@ class _SupportEventPageState extends State<SupportEventPage>
   }
 
   Widget _buildIndividualEventsTab() {
+    final user = FirebaseAuth.instance.currentUser;
+    
+    // Demo mode: show mock data
+    if (user == null) {
+      final mockEvents = _getMockUpcomingEvents();
+      final filteredEvents = mockEvents.where((event) {
+        if (_searchQuery.isEmpty) return true;
+        return event.title.toLowerCase().contains(_searchQuery) ||
+               event.clubname.toLowerCase().contains(_searchQuery) ||
+               event.description.toLowerCase().contains(_searchQuery);
+      }).toList();
+
+      if (filteredEvents.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                IconlyBold.search,
+                size: 64,
+                color: context.neutralGray,
+              ),
+              SizedBox(height: context.spacingL),
+              Text(
+                'No events found',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: context.neutralBlack.withValues(alpha: 0.7),
+                ),
+              ),
+              SizedBox(height: context.spacingS),
+              Text(
+                'Try adjusting your search terms',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: context.neutralBlack.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return ListView.builder(
+        padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+        itemCount: filteredEvents.length,
+        itemBuilder: (context, index) {
+          final event = filteredEvents[index];
+          return _buildEventCard(context, event);
+        },
+      );
+    }
+
+    // Real mode: query Firestore
     return StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('events')
-                    .where('eventDate', isGreaterThan: Timestamp.now())
-                    .orderBy('eventDate')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+      stream: FirebaseFirestore.instance
+          .collection('events')
+          .where('eventDate', isGreaterThan: Timestamp.now())
+          .orderBy('eventDate')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error loading events',
-                        style: TextStyle(
-                          color: context.errorRed,
-                          fontSize: 16,
-                        ),
-                      ),
-                    );
-                  }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading events',
+              style: TextStyle(
+                color: context.errorRed,
+                fontSize: 16,
+              ),
+            ),
+          );
+        }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            IconlyBold.calendar,
-                            size: 64,
-                            color: context.neutralGray,
-                          ),
-                          SizedBox(height: context.spacingL),
-                          Text(
-                            'No upcoming events',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: context.neutralBlack.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          SizedBox(height: context.spacingS),
-                          Text(
-                            'Check back later for new events to support',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: context.neutralBlack.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  IconlyBold.calendar,
+                  size: 64,
+                  color: context.neutralGray,
+                ),
+                SizedBox(height: context.spacingL),
+                Text(
+                  'No upcoming events',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: context.neutralBlack.withValues(alpha: 0.7),
+                  ),
+                ),
+                SizedBox(height: context.spacingS),
+                Text(
+                  'Check back later for new events to support',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.neutralBlack.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
 
-                  final events = snapshot.data!.docs
-                      .map((doc) => Event.fromJson(doc.data() as Map<String, dynamic>, doc.id))
-                      .where((event) {
-                    if (_searchQuery.isEmpty) return true;
-                    return event.title.toLowerCase().contains(_searchQuery) ||
-                           event.clubname.toLowerCase().contains(_searchQuery) ||
-                           event.description.toLowerCase().contains(_searchQuery);
-                  }).toList();
+        final events = snapshot.data!.docs
+            .map((doc) => Event.fromJson(doc.data() as Map<String, dynamic>, doc.id))
+            .where((event) {
+          if (_searchQuery.isEmpty) return true;
+          return event.title.toLowerCase().contains(_searchQuery) ||
+                 event.clubname.toLowerCase().contains(_searchQuery) ||
+                 event.description.toLowerCase().contains(_searchQuery);
+        }).toList();
 
-                  if (events.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            IconlyBold.search,
-                            size: 64,
-                            color: context.neutralGray,
-                          ),
-                          SizedBox(height: context.spacingL),
-                          Text(
-                            'No events found',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: context.neutralBlack.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          SizedBox(height: context.spacingS),
-                          Text(
-                            'Try adjusting your search terms',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: context.neutralBlack.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+        if (events.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  IconlyBold.search,
+                  size: 64,
+                  color: context.neutralGray,
+                ),
+                SizedBox(height: context.spacingL),
+                Text(
+                  'No events found',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: context.neutralBlack.withValues(alpha: 0.7),
+                  ),
+                ),
+                SizedBox(height: context.spacingS),
+                Text(
+                  'Try adjusting your search terms',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.neutralBlack.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
 
-                  return ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      return _buildEventCard(context, event);
-                    },
-                  );
-                },
-              );
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+          itemCount: events.length,
+          itemBuilder: (context, index) {
+            final event = events[index];
+            return _buildEventCard(context, event);
+          },
+        );
+      },
+    );
+  }
+
+  /// Mock upcoming events for demo mode
+  List<Event> _getMockUpcomingEvents() {
+    final now = DateTime.now();
+    return [
+      Event(
+        eventId: 'demo_upcoming_1',
+        ownerId: 'demo_club_1',
+        clubname: 'Economics Student Association',
+        title: 'Macroeconomics Study Session',
+        description: 'Review key concepts in macroeconomics including GDP, inflation, and monetary policy. Perfect for exam preparation.',
+        location: 'Business School, Room 305',
+        createdAt: now.subtract(const Duration(days: 2)),
+        eventDate: now.add(const Duration(days: 3)),
+        durationMinutes: 90,
+        isQrEnabled: true,
+        likeCount: 8,
+        commentCount: 3,
+        isRsvped: false,
+        mediaUrls: [],
+        attendanceList: [],
+        rsvpList: ['demo_student_1', 'demo_student_2', 'demo_student_3'],
+      ),
+      Event(
+        eventId: 'demo_upcoming_2',
+        ownerId: 'demo_club_2',
+        clubname: 'Business Analytics Club',
+        title: 'Python for Data Science Workshop',
+        description: 'Hands-on workshop covering pandas, numpy, and matplotlib. Bring your laptop!',
+        location: 'Computer Lab, Building C',
+        createdAt: now.subtract(const Duration(days: 1)),
+        eventDate: now.add(const Duration(days: 5)),
+        durationMinutes: 120,
+        isQrEnabled: true,
+        likeCount: 15,
+        commentCount: 7,
+        isRsvped: false,
+        mediaUrls: [],
+        attendanceList: [],
+        rsvpList: ['demo_student_2', 'demo_student_4', 'demo_student_5', 'demo_student_6'],
+      ),
+      Event(
+        eventId: 'demo_upcoming_3',
+        ownerId: 'demo_club_1',
+        clubname: 'Economics Student Association',
+        title: 'Career Panel: Economics in Industry',
+        description: 'Hear from alumni working in finance, consulting, and policy about how they apply economics in their careers.',
+        location: 'Auditorium, Main Hall',
+        createdAt: now.subtract(const Duration(days: 3)),
+        eventDate: now.add(const Duration(days: 7)),
+        durationMinutes: 75,
+        isQrEnabled: true,
+        likeCount: 22,
+        commentCount: 10,
+        isRsvped: false,
+        mediaUrls: [],
+        attendanceList: [],
+        rsvpList: ['demo_student_1', 'demo_student_3', 'demo_student_4', 'demo_student_7', 'demo_student_8'],
+      ),
+    ];
   }
 
   Widget _buildEventCard(BuildContext context, Event event) {
@@ -508,12 +624,37 @@ class _SupportEventPageState extends State<SupportEventPage>
 
   Widget _buildClubPartnershipsTab() {
     final user = FirebaseAuth.instance.currentUser;
+    
+    // Demo mode: show mock data
     if (user == null) {
-      return Center(
-        child: Text(
-          'Please sign in',
-          style: TextStyle(color: context.neutralDark),
-        ),
+      return Column(
+        children: [
+          // Create Partnership Button (disabled in demo)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: null, // Disabled in demo
+                icon: const Icon(IconlyBold.plus),
+                label: const Text('Create New Partnership'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.accentNavy.withValues(alpha: 0.5),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: context.spacingM),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(context.radiusL),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: context.spacingL),
+          // Mock Partnerships List
+          Expanded(
+            child: _buildMockPartnershipsList(),
+          ),
+        ],
       );
     }
 
@@ -544,65 +685,65 @@ class _SupportEventPageState extends State<SupportEventPage>
         // Partnerships List
         Expanded(
           child: StreamBuilder<List<Partnership>>(
-            stream: PartnershipService.getTeacherPartnerships(user.uid),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+                  stream: PartnershipService.getTeacherPartnerships(user.uid),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'Error loading partnerships',
-                    style: TextStyle(color: context.errorRed),
-                  ),
-                );
-              }
-
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        IconlyBold.user_3,
-                        size: 64,
-                        color: context.neutralGray,
-                      ),
-                      SizedBox(height: context.spacingL),
-                      Text(
-                        'No partnerships yet',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: context.neutralBlack.withValues(alpha: 0.7),
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error loading partnerships',
+                          style: TextStyle(color: context.errorRed),
                         ),
-                      ),
-                      SizedBox(height: context.spacingS),
-                      Text(
-                        'Create a partnership to approve a club\nfor extra credit opportunities',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: context.neutralBlack.withValues(alpha: 0.5),
+                      );
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              IconlyBold.user_3,
+                              size: 64,
+                              color: context.neutralGray,
+                            ),
+                            SizedBox(height: context.spacingL),
+                            Text(
+                              'No partnerships yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: context.neutralBlack.withValues(alpha: 0.7),
+                              ),
+                            ),
+                            SizedBox(height: context.spacingS),
+                            Text(
+                              'Create a partnership to approve a club\nfor extra credit opportunities',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: context.neutralBlack.withValues(alpha: 0.5),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                );
-              }
+                      );
+                    }
 
-              final partnerships = snapshot.data!;
+                    final partnerships = snapshot.data!;
 
-              return ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
-                itemCount: partnerships.length,
-                itemBuilder: (context, index) {
-                  return _buildPartnershipCard(partnerships[index]);
-                },
-              );
-            },
-          ),
+                    return ListView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+                      itemCount: partnerships.length,
+                      itemBuilder: (context, index) {
+                        return _buildPartnershipCard(partnerships[index]);
+                      },
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -839,6 +980,77 @@ class _SupportEventPageState extends State<SupportEventPage>
         teachingSessions: teachingSessions,
       ),
     );
+  }
+
+  /// Mock partnerships list for demo mode
+  Widget _buildMockPartnershipsList() {
+    final mockPartnerships = _getMockPartnerships();
+    
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+      itemCount: mockPartnerships.length,
+      itemBuilder: (context, index) {
+        return _buildPartnershipCard(mockPartnerships[index]);
+      },
+    );
+  }
+
+  /// Mock partnership data for demo mode
+  List<Partnership> _getMockPartnerships() {
+    return [
+      Partnership(
+        partnershipId: 'demo_partnership_1',
+        teacherId: 'demo_teacher',
+        teacherName: 'Demo Teacher',
+        clubId: 'demo_club_1',
+        clubName: 'Economics Student Association',
+        courses: [
+          PartnershipCourse(
+            courseId: 'demo_session_1',
+            courseCode: 'ECON 101',
+            courseName: 'Introduction to Microeconomics',
+            pointsPerEvent: 10,
+            maxEventsPerStudent: 5,
+          ),
+        ],
+        semester: 'Fall 2024',
+        approvalMode: 'auto',
+        status: 'active',
+        createdAt: DateTime.now().subtract(const Duration(days: 30)),
+        expiresAt: DateTime.now().add(const Duration(days: 60)),
+        stats: PartnershipStats(
+          totalStudents: 8,
+          totalEventsAttended: 24,
+          averageEventsPerStudent: 3.0,
+        ),
+      ),
+      Partnership(
+        partnershipId: 'demo_partnership_2',
+        teacherId: 'demo_teacher',
+        teacherName: 'Demo Teacher',
+        clubId: 'demo_club_2',
+        clubName: 'Business Analytics Club',
+        courses: [
+          PartnershipCourse(
+            courseId: 'demo_session_2',
+            courseCode: 'ECON 201',
+            courseName: 'Intermediate Macroeconomics',
+            pointsPerEvent: 15,
+            maxEventsPerStudent: 3,
+          ),
+        ],
+        semester: 'Fall 2024',
+        approvalMode: 'manual',
+        status: 'active',
+        createdAt: DateTime.now().subtract(const Duration(days: 15)),
+        expiresAt: DateTime.now().add(const Duration(days: 75)),
+        stats: PartnershipStats(
+          totalStudents: 5,
+          totalEventsAttended: 12,
+          averageEventsPerStudent: 2.4,
+        ),
+      ),
+    ];
   }
 
   Future<void> _showEditPartnershipDialog(Partnership partnership) async {

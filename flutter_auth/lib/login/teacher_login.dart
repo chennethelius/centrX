@@ -47,7 +47,7 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(context.spacingXL),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,112 +155,191 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
 
               SizedBox(height: context.spacingXXL * 2),
 
-              // TEST SECTION - Teacher Login Testing
+              // Demo Mode Section
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(context.spacingL),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: context.accentNavy.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(context.radiusL),
                   border: Border.all(
-                    color: Colors.orange.shade200,
+                    color: context.accentNavy.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Icon(
+                          IconlyBold.video,
+                          color: context.accentNavy,
+                          size: 20,
+                        ),
+                        SizedBox(width: context.spacingS),
+                        Text(
+                          'Demo Mode',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: context.accentNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: context.spacingS),
                     Text(
-                      '🧪 TEST: Manual Teacher Login',
+                      'Explore the teacher dashboard without signing in. Perfect for presentations and testing.',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.orange.shade800,
+                        fontSize: 14,
+                        color: context.neutralBlack.withValues(alpha: 0.7),
+                        height: 1.4,
                       ),
                     ),
-                    SizedBox(height: context.spacingM),
+                    SizedBox(height: context.spacingL),
                     
-                    // Email input field
-                    TextField(
-                      controller: _testEmailController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter SLU faculty email (e.g., john.smith@slu.edu)',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(context.radiusM),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: context.spacingM,
-                          vertical: context.spacingS,
-                        ),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    
-                    SizedBox(height: context.spacingM),
-                    
-                    // Test button
+                    // Demo Button
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final email = _testEmailController.text.trim();
-                          if (email.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please enter an email address')),
-                            );
-                            return;
-                          }
-                          
-                          // Test teacher login
-                          final user = await AuthService().testTeacherLogin(email);
-                          if (!context.mounted) return;
-                          
-                          if (user != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('✅ TEST: Teacher login success for $email')),
-                            );
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => const TeacherPage()),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('❌ TEST: Email $email not found in teacher directory')),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange.shade600,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Test Teacher Login'),
-                      ),
-                    ),
-                    
-                    SizedBox(height: context.spacingM),
-                    
-                    // Direct navigation button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(builder: (context) => const TeacherPage()),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple.shade600,
+                          backgroundColor: context.accentNavy,
                           foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: context.spacingL,
+                            vertical: context.spacingM,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(context.radiusL),
+                          ),
+                          elevation: 2,
                         ),
-                        child: const Text('🎯 Go Directly to Teacher Page'),
+                        icon: const Icon(IconlyBold.video, size: 20),
+                        label: const Text(
+                          'View Demo',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              SizedBox(height: context.spacingXL),
+
+              // TEST SECTION - Teacher Login Testing (Collapsed)
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.only(
+                  top: context.spacingM,
+                  bottom: context.spacingM,
+                ),
+                title: Text(
+                  '🧪 Developer Options',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: context.neutralBlack.withValues(alpha: 0.6),
+                  ),
+                ),
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(context.spacingL),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(context.radiusL),
+                      border: Border.all(
+                        color: Colors.orange.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Test Teacher Login',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange.shade800,
+                          ),
+                        ),
+                        SizedBox(height: context.spacingM),
+                        
+                        // Email input field
+                        TextField(
+                          controller: _testEmailController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter SLU faculty email',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(context.radiusM),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: context.spacingM,
+                              vertical: context.spacingS,
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        
+                        SizedBox(height: context.spacingM),
+                        
+                        // Test button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final email = _testEmailController.text.trim();
+                              if (email.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Please enter an email address')),
+                                );
+                                return;
+                              }
+                              
+                              // Test teacher login
+                              final user = await AuthService().testTeacherLogin(email);
+                              if (!context.mounted) return;
+                              
+                              if (user != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('✅ TEST: Teacher login success for $email')),
+                                );
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const TeacherPage()),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('❌ TEST: Email $email not found in teacher directory')),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange.shade600,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Test Teacher Login'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               
-              const Spacer(),
+              SizedBox(height: context.spacingXL),
               
               // Footer text
               Center(

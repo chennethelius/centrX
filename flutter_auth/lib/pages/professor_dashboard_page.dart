@@ -37,6 +37,20 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   }
 
   Future<void> _loadTeachingCourses() async {
+    // Demo mode: user is null, show mock data
+    if (user == null) {
+      setState(() => _isLoading = true);
+      // Simulate loading delay
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      setState(() {
+        _teachingCourses = _getMockTeachingCourses();
+        _selectedCourseId = _teachingCourses.isNotEmpty ? _teachingCourses[0]['sessionId'] : null;
+        _isLoading = false;
+      });
+      return;
+    }
+
     if (user?.email == null) return;
 
     setState(() => _isLoading = true);
@@ -65,6 +79,26 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
       setState(() => _isLoading = false);
       debugPrint('Error loading teaching courses: $e');
     }
+  }
+
+  /// Mock data for demo mode
+  List<Map<String, dynamic>> _getMockTeachingCourses() {
+    return [
+      {
+        'sessionId': 'demo_session_1',
+        'courseCode': 'ECON 101',
+        'courseName': 'Introduction to Microeconomics',
+        'section': 'A',
+        'semester': 'Fall 2024',
+      },
+      {
+        'sessionId': 'demo_session_2',
+        'courseCode': 'ECON 201',
+        'courseName': 'Intermediate Macroeconomics',
+        'section': 'B',
+        'semester': 'Fall 2024',
+      },
+    ];
   }
 
   Map<String, dynamic>? get _selectedCourse {
@@ -383,6 +417,11 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   }
 
   Future<List<Map<String, dynamic>>> _getEnrolledStudents(String courseCode) async {
+    // Demo mode: user is null, return mock data
+    if (user == null) {
+      return _getMockStudents(courseCode);
+    }
+
     try {
       final usersSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -428,6 +467,76 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
       debugPrint('Error getting enrolled students: $e');
       return [];
     }
+  }
+
+  /// Mock student data for demo mode
+  List<Map<String, dynamic>> _getMockStudents(String courseCode) {
+    return [
+      {
+        'id': 'demo_student_1',
+        'firstName': 'Sarah',
+        'lastName': 'Johnson',
+        'email': 'sarah.johnson@slu.edu',
+        'points': 45,
+        'extraCreditPercent': _calculateExtraCreditPercent(45),
+      },
+      {
+        'id': 'demo_student_2',
+        'firstName': 'Michael',
+        'lastName': 'Chen',
+        'email': 'michael.chen@slu.edu',
+        'points': 38,
+        'extraCreditPercent': _calculateExtraCreditPercent(38),
+      },
+      {
+        'id': 'demo_student_3',
+        'firstName': 'Emily',
+        'lastName': 'Rodriguez',
+        'email': 'emily.rodriguez@slu.edu',
+        'points': 32,
+        'extraCreditPercent': _calculateExtraCreditPercent(32),
+      },
+      {
+        'id': 'demo_student_4',
+        'firstName': 'James',
+        'lastName': 'Williams',
+        'email': 'james.williams@slu.edu',
+        'points': 28,
+        'extraCreditPercent': _calculateExtraCreditPercent(28),
+      },
+      {
+        'id': 'demo_student_5',
+        'firstName': 'Olivia',
+        'lastName': 'Martinez',
+        'email': 'olivia.martinez@slu.edu',
+        'points': 25,
+        'extraCreditPercent': _calculateExtraCreditPercent(25),
+      },
+      {
+        'id': 'demo_student_6',
+        'firstName': 'David',
+        'lastName': 'Brown',
+        'email': 'david.brown@slu.edu',
+        'points': 20,
+        'extraCreditPercent': _calculateExtraCreditPercent(20),
+      },
+      {
+        'id': 'demo_student_7',
+        'firstName': 'Sophia',
+        'lastName': 'Davis',
+        'email': 'sophia.davis@slu.edu',
+        'points': 15,
+        'extraCreditPercent': _calculateExtraCreditPercent(15),
+      },
+      {
+        'id': 'demo_student_8',
+        'firstName': 'Daniel',
+        'lastName': 'Garcia',
+        'email': 'daniel.garcia@slu.edu',
+        'points': 10,
+        'extraCreditPercent': _calculateExtraCreditPercent(10),
+      },
+    ];
   }
 
   double _calculateExtraCreditPercent(int points) {
