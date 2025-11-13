@@ -1,10 +1,11 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:iconly/iconly.dart';
 import '../services/rsvp_service.dart';
+import '../theme/theme_extensions.dart';
 
-class RsvpDetailsPage extends StatelessWidget {
+class RsvpDetailsPage extends StatefulWidget {
   final Map<String, dynamic> eventData;
   final String clubId;
   final String eventId;
@@ -19,133 +20,305 @@ class RsvpDetailsPage extends StatelessWidget {
   });
 
   @override
+  State<RsvpDetailsPage> createState() => _RsvpDetailsPageState();
+}
+
+class _RsvpDetailsPageState extends State<RsvpDetailsPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final title = eventData['title'] as String? ?? 'Event';
-    final desc = eventData['description'] as String? ?? '';
-    final host = eventData['hostClubName'] as String? ?? '';
-    final ts = (eventData['eventDate'] as Timestamp).toDate();
-    final loc = eventData['location'] as String? ?? '';
-    final formatted = DateFormat.yMMMd().add_jm().format(ts);
-    final rsvpCount = (eventData['rsvpList'] as List<dynamic>? ?? []).length;
+    final title = widget.eventData['title'] as String? ?? 'Event';
+    final desc = widget.eventData['description'] as String? ?? '';
+    final ts = (widget.eventData['eventDate'] as Timestamp).toDate();
+    final loc = widget.eventData['location'] as String? ?? '';
+    final formattedDate = DateFormat('EEEE, MMMM d').format(ts);
+    final formattedTime = DateFormat('h:mm a').format(ts);
+    final rsvpCount = (widget.eventData['rsvpList'] as List<dynamic>? ?? []).length;
 
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(0, 0, 0, 0.3),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                    color: const Color.fromRGBO(255, 255, 255, 0.25),
-                    width: 2.5,
-                  ),
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color.fromRGBO(255, 255, 255, 0.18),
-                      Color.fromRGBO(255, 255, 255, 0.10),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+      backgroundColor: Colors.black.withValues(alpha: 0.5),
+      body: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _fadeAnimation.value,
+            child: Center(
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.all(context.spacingXL),
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      decoration: BoxDecoration(
+                        color: context.neutralWhite,
+                        borderRadius: BorderRadius.circular(context.radiusXL),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 32,
+                            offset: const Offset(0, 8),
+                            spreadRadius: 0,
+                          ),
+                          BoxShadow(
+                            color: context.accentNavy.withValues(alpha: 0.1),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                            spreadRadius: -4,
+                          ),
+                        ],
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(title,
-                                  style: const TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                          // Header with close button
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              context.spacingXL,
+                              context.spacingXL,
+                              context.spacingL,
+                              context.spacingL,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w700,
+                                      color: context.neutralBlack,
+                                      height: 1.2,
+                                      letterSpacing: -0.5,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              GestureDetector(
-                                onTap: () => Navigator.of(context).pop(),
-                                child: const Icon(Icons.close, color: Colors.white, size: 28),
-                              ),
-                            ],
+                                GestureDetector(
+                                  onTap: () => Navigator.of(context).pop(),
+                                  child: Container(
+                                    padding: EdgeInsets.all(context.spacingXS),
+                                    decoration: BoxDecoration(
+                                      color: context.neutralGray.withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      IconlyBold.close_square,
+                                      color: context.neutralBlack.withValues(alpha: 0.6),
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(desc, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today_outlined, color: Colors.white70, size: 18),
-                              const SizedBox(width: 8),
-                              Text(formatted, style: const TextStyle(color: Colors.white, fontSize: 15)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined, color: Colors.white70, size: 18),
-                              const SizedBox(width: 8),
-                              Text(loc, style: const TextStyle(color: Colors.white, fontSize: 15)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.people_outline, color: Colors.white70, size: 18),
-                              const SizedBox(width: 8),
-                              Text('RSVPs: $rsvpCount', style: const TextStyle(color: Colors.white, fontSize: 15)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.account_balance_outlined, color: Colors.white70, size: 18),
-                              const SizedBox(width: 8),
-                              Text('Host: $host', style: const TextStyle(color: Colors.white, fontSize: 15)),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: isRsvped ? null : () async {
-                                await RsvpService.rsvpToEvent(
-                                  clubId: clubId,
-                                  eventId: eventId,
-                                );
-                                Navigator.of(context).pop();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromRGBO(138, 255, 128, 0.85),
-                                foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 18),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+
+                          // Description
+                          if (desc.isNotEmpty) ...[
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+                              child: Text(
+                                desc,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: context.neutralBlack.withValues(alpha: 0.7),
+                                  height: 1.5,
                                 ),
                               ),
-                              child: Text(
-                                isRsvped ? 'Already RSVPed' : 'RSVP to Event',
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: context.spacingXL),
+                          ],
+
+                          // Event Details - Sleek
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+                            child: Column(
+                              children: [
+                                _buildSleekDetail(
+                                  context,
+                                  icon: IconlyBold.calendar,
+                                  text: '$formattedDate',
+                                  subtitle: formattedTime,
+                                ),
+                                SizedBox(height: context.spacingL),
+                                _buildSleekDetail(
+                                  context,
+                                  icon: IconlyBold.location,
+                                  text: loc,
+                                ),
+                                SizedBox(height: context.spacingL),
+                                _buildSleekDetail(
+                                  context,
+                                  icon: IconlyBold.user_2,
+                                  text: '$rsvpCount ${rsvpCount == 1 ? 'person' : 'people'} going',
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          SizedBox(height: context.spacingXXL),
+
+                          // RSVP Button - Sleek
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              context.spacingXL,
+                              0,
+                              context.spacingXL,
+                              context.spacingXL,
+                            ),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: widget.isRsvped
+                                    ? null
+                                    : () async {
+                                        await RsvpService.rsvpToEvent(
+                                          clubId: widget.clubId,
+                                          eventId: widget.eventId,
+                                        );
+                                        if (context.mounted) {
+                                          Navigator.of(context).pop();
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: widget.isRsvped
+                                      ? context.neutralGray.withValues(alpha: 0.2)
+                                      : context.accentNavy,
+                                  foregroundColor: widget.isRsvped
+                                      ? context.neutralBlack.withValues(alpha: 0.5)
+                                      : Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: context.spacingL + 2,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(context.radiusM),
+                                  ),
+                                  elevation: widget.isRsvped ? 0 : 2,
+                                  shadowColor: context.accentNavy.withValues(alpha: 0.3),
+                                ),
+                                child: Text(
+                                  widget.isRsvped ? 'Already RSVPed' : 'RSVP',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSleekDetail(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    String? subtitle,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(context.spacingM),
+      decoration: BoxDecoration(
+        color: context.secondaryLight.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(context.radiusM),
+        border: Border.all(
+          color: context.neutralGray.withValues(alpha: 0.1),
+          width: 1,
         ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(context.spacingS),
+            decoration: BoxDecoration(
+              color: context.accentNavy.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(context.radiusS),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: context.accentNavy,
+            ),
+          ),
+          SizedBox(width: context.spacingM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: context.neutralBlack,
+                    fontWeight: FontWeight.w500,
+                    height: 1.3,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  SizedBox(height: context.spacingXS / 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: context.neutralBlack.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

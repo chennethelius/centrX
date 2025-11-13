@@ -48,8 +48,6 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     super.dispose();
   }
 
-  List<DateTime> get _rsvpDays => _eventsByDate.keys.toList();
-
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
@@ -174,12 +172,13 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
   Widget _buildCalendarGrid(double base) {
     final daysInMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0).day;
-    final firstWeekday = DateTime(_focusedDay.year, _focusedDay.month, 1).weekday; // 1 = Mon
+    final firstWeekday = DateTime(_focusedDay.year, _focusedDay.month, 1).weekday; // 1 = Mon, 7 = Sun
     final prevMonth = DateTime(_focusedDay.year, _focusedDay.month - 1, 0);
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     // Calculate how many rows we need
-    final daysFromPrevMonth = firstWeekday - 1;
+    // Convert weekday (1=Mon, 7=Sun) to Sun-Sat format (0=Sun, 1=Mon, ..., 6=Sat)
+    final daysFromPrevMonth = firstWeekday % 7; // Sunday (7) becomes 0, Monday (1) becomes 1, etc.
     final totalCells = daysFromPrevMonth + daysInMonth;
     final rowsNeeded = (totalCells / 7).ceil();
 
