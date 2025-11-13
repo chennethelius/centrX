@@ -12,7 +12,8 @@ class ProfessorDashboardPage extends StatefulWidget {
   State<ProfessorDashboardPage> createState() => _ProfessorDashboardPageState();
 }
 
-class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with SingleTickerProviderStateMixin {
+class _ProfessorDashboardPageState extends State<ProfessorDashboardPage>
+    with SingleTickerProviderStateMixin {
   final User? user = FirebaseAuth.instance.currentUser;
   List<Map<String, dynamic>> _teachingCourses = [];
   String? _selectedCourseId;
@@ -42,10 +43,13 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
       setState(() => _isLoading = true);
       // Simulate loading delay
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       setState(() {
         _teachingCourses = _getMockTeachingCourses();
-        _selectedCourseId = _teachingCourses.isNotEmpty ? _teachingCourses[0]['sessionId'] : null;
+        _selectedCourseId =
+            _teachingCourses.isNotEmpty
+                ? _teachingCourses[0]['sessionId']
+                : null;
         _isLoading = false;
       });
       return;
@@ -56,20 +60,22 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     setState(() => _isLoading = true);
 
     try {
-      final teacherDoc = await FirebaseFirestore.instance
-          .collection('teachers_dir')
-          .doc(user!.email)
-          .get();
+      final teacherDoc =
+          await FirebaseFirestore.instance
+              .collection('teachers_dir')
+              .doc(user!.email)
+              .get();
 
       if (teacherDoc.exists) {
         final teacherData = teacherDoc.data()!;
         final sessions = List<Map<String, dynamic>>.from(
-          teacherData['teachingSessions'] ?? []
+          teacherData['teachingSessions'] ?? [],
         );
 
         setState(() {
           _teachingCourses = sessions;
-          _selectedCourseId = sessions.isNotEmpty ? sessions[0]['sessionId'] : null;
+          _selectedCourseId =
+              sessions.isNotEmpty ? sessions[0]['sessionId'] : null;
           _isLoading = false;
         });
       } else {
@@ -104,7 +110,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   Map<String, dynamic>? get _selectedCourse {
     if (_selectedCourseId == null) return null;
     try {
-      return _teachingCourses.firstWhere((c) => c['sessionId'] == _selectedCourseId);
+      return _teachingCourses.firstWhere(
+        (c) => c['sessionId'] == _selectedCourseId,
+      );
     } catch (e) {
       return null;
     }
@@ -119,9 +127,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           children: [
             _buildHeader(),
             if (_isLoading)
-              const Expanded(
-                child: Center(child: CircularProgressIndicator()),
-              )
+              const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_teachingCourses.isEmpty)
               _buildEmptyState()
             else
@@ -133,10 +139,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                     Expanded(
                       child: TabBarView(
                         controller: _tabController,
-                        children: [
-                          _buildStudentsList(),
-                          _buildSettingsTab(),
-                        ],
+                        children: [_buildStudentsList(), _buildSettingsTab()],
                       ),
                     ),
                   ],
@@ -151,7 +154,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   Widget _buildHeader() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isSmallScreen ? context.spacingM : context.spacingL,
@@ -270,7 +273,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     final isSmallScreen = screenWidth < 600;
 
     return Container(
-      margin: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
+      margin: EdgeInsets.all(
+        isSmallScreen ? context.spacingM : context.spacingL,
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: isSmallScreen ? context.spacingS : context.spacingM,
         vertical: isSmallScreen ? context.spacingXS : context.spacingS,
@@ -278,9 +283,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
       decoration: BoxDecoration(
         color: context.secondaryLight,
         borderRadius: BorderRadius.circular(context.radiusL),
-        border: Border.all(
-          color: context.neutralGray.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: context.neutralGray.withValues(alpha: 0.2)),
       ),
       child: DropdownButton<String>(
         value: _selectedCourseId,
@@ -291,42 +294,43 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           color: context.neutralBlack,
           size: isSmallScreen ? 18 : 20,
         ),
-        items: _teachingCourses.map((course) {
-          final courseCode = course['courseCode'] ?? 'Unknown';
-          final courseName = course['courseName'] ?? 'Unknown Course';
-          final section = course['section'] ?? '';
-          
-          return DropdownMenuItem<String>(
-            value: course['sessionId'],
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$courseCode${section.isNotEmpty ? ' - $section' : ''}',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 16,
-                    fontWeight: FontWeight.w600,
-                    color: context.neutralBlack,
-                  ),
-                ),
-                if (!isSmallScreen) ...[
-                  SizedBox(height: context.spacingXS / 2),
-                  Text(
-                    courseName,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: context.neutralBlack.withValues(alpha: 0.6),
+        items:
+            _teachingCourses.map((course) {
+              final courseCode = course['courseCode'] ?? 'Unknown';
+              final courseName = course['courseName'] ?? 'Unknown Course';
+              final section = course['section'] ?? '';
+
+              return DropdownMenuItem<String>(
+                value: course['sessionId'],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$courseCode${section.isNotEmpty ? ' - $section' : ''}',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 14 : 16,
+                        fontWeight: FontWeight.w600,
+                        color: context.neutralBlack,
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ],
-              ],
-            ),
-          );
-        }).toList(),
+                    if (!isSmallScreen) ...[
+                      SizedBox(height: context.spacingXS / 2),
+                      Text(
+                        courseName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.neutralBlack.withValues(alpha: 0.6),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }).toList(),
         onChanged: (value) {
           setState(() {
             _selectedCourseId = value;
@@ -339,7 +343,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   Widget _buildTabBar() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    
+
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isSmallScreen ? context.spacingM : context.spacingL,
@@ -363,10 +367,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           fontSize: isSmallScreen ? 13 : 14,
           fontWeight: FontWeight.w600,
         ),
-        tabs: const [
-          Tab(text: 'Students'),
-          Tab(text: 'Settings'),
-        ],
+        tabs: const [Tab(text: 'Students'), Tab(text: 'Settings')],
       ),
     );
   }
@@ -377,13 +378,17 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     final courseCode = _selectedCourse!['courseCode'] ?? '';
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .where('enrolledClasses', arrayContains: {
-            'courseId': _selectedCourseId,
-            'courseCode': courseCode,
-          })
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collection('users')
+              .where(
+                'enrolledClasses',
+                arrayContains: {
+                  'courseId': _selectedCourseId,
+                  'courseCode': courseCode,
+                },
+              )
+              .snapshots(),
       builder: (context, snapshot) {
         // Fallback: Manual query since arrayContains with map doesn't work
         return FutureBuilder<List<Map<String, dynamic>>>(
@@ -401,9 +406,11 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
 
             final screenWidth = MediaQuery.of(context).size.width;
             final isSmallScreen = screenWidth < 600;
-            
+
             return ListView.builder(
-              padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
+              padding: EdgeInsets.all(
+                isSmallScreen ? context.spacingM : context.spacingL,
+              ),
               itemCount: students.length,
               itemBuilder: (context, index) {
                 final student = students[index];
@@ -416,29 +423,32 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     );
   }
 
-  Future<List<Map<String, dynamic>>> _getEnrolledStudents(String courseCode) async {
+  Future<List<Map<String, dynamic>>> _getEnrolledStudents(
+    String courseCode,
+  ) async {
     // Demo mode: user is null, return mock data
     if (user == null) {
       return _getMockStudents(courseCode);
     }
 
     try {
-      final usersSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('role', isEqualTo: 'student')
-          .get();
+      final usersSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('role', isEqualTo: 'student')
+              .get();
 
       final enrolledStudents = <Map<String, dynamic>>[];
 
       for (final doc in usersSnapshot.docs) {
         final userData = doc.data();
         final enrolledClasses = List<Map<String, dynamic>>.from(
-          userData['enrolledClasses'] ?? []
+          userData['enrolledClasses'] ?? [],
         );
 
         // Check if student is enrolled in this course
-        final isEnrolled = enrolledClasses.any((c) => 
-          c['courseCode'] == courseCode
+        final isEnrolled = enrolledClasses.any(
+          (c) => c['courseCode'] == courseCode,
         );
 
         if (isEnrolled) {
@@ -458,8 +468,8 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
       }
 
       // Sort by points descending
-      enrolledStudents.sort((a, b) => 
-        (b['points'] as int).compareTo(a['points'] as int)
+      enrolledStudents.sort(
+        (a, b) => (b['points'] as int).compareTo(a['points'] as int),
       );
 
       return enrolledStudents;
@@ -551,11 +561,7 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              IconlyBold.user_2,
-              size: 64,
-              color: context.neutralGray,
-            ),
+            Icon(IconlyBold.user_2, size: 64, color: context.neutralGray),
             SizedBox(height: context.spacingL),
             Text(
               'No Students Enrolled',
@@ -587,18 +593,18 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     final email = student['email'] as String;
     final points = student['points'] as int;
     final ecPercent = student['extraCreditPercent'] as double;
-    
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
 
     return Container(
-      margin: EdgeInsets.only(bottom: isSmallScreen ? context.spacingS : context.spacingM),
+      margin: EdgeInsets.only(
+        bottom: isSmallScreen ? context.spacingS : context.spacingM,
+      ),
       decoration: BoxDecoration(
         color: context.neutralWhite,
         borderRadius: BorderRadius.circular(context.radiusL),
-        border: Border.all(
-          color: context.neutralGray.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: context.neutralGray.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -613,7 +619,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           borderRadius: BorderRadius.circular(context.radiusL),
           onTap: () => _showStudentDetails(student),
           child: Padding(
-            padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
+            padding: EdgeInsets.all(
+              isSmallScreen ? context.spacingM : context.spacingL,
+            ),
             child: Row(
               children: [
                 // Avatar
@@ -629,7 +637,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                     ),
                   ),
                 ),
-                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
+                SizedBox(
+                  width: isSmallScreen ? context.spacingS : context.spacingM,
+                ),
 
                 // Student info
                 Expanded(
@@ -659,10 +669,18 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                           maxLines: 1,
                         ),
                       ],
-                      SizedBox(height: isSmallScreen ? context.spacingXS : context.spacingS),
+                      SizedBox(
+                        height:
+                            isSmallScreen
+                                ? context.spacingXS
+                                : context.spacingS,
+                      ),
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isSmallScreen ? context.spacingXS : context.spacingS,
+                          horizontal:
+                              isSmallScreen
+                                  ? context.spacingXS
+                                  : context.spacingS,
                           vertical: isSmallScreen ? 2 : context.spacingXS,
                         ),
                         decoration: BoxDecoration(
@@ -696,13 +714,16 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                 // EC Display
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isSmallScreen ? context.spacingS : context.spacingM,
-                    vertical: isSmallScreen ? context.spacingXS : context.spacingS,
+                    horizontal:
+                        isSmallScreen ? context.spacingS : context.spacingM,
+                    vertical:
+                        isSmallScreen ? context.spacingXS : context.spacingS,
                   ),
                   decoration: BoxDecoration(
-                    color: ecPercent > 0 
-                        ? context.successGreen.withValues(alpha: 0.1)
-                        : context.neutralGray.withValues(alpha: 0.1),
+                    color:
+                        ecPercent > 0
+                            ? context.successGreen.withValues(alpha: 0.1)
+                            : context.neutralGray.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(context.radiusM),
                   ),
                   child: Column(
@@ -713,9 +734,10 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                         style: TextStyle(
                           fontSize: isSmallScreen ? 18 : 24,
                           fontWeight: FontWeight.w700,
-                          color: ecPercent > 0 
-                              ? context.successGreen
-                              : context.neutralBlack.withValues(alpha: 0.5),
+                          color:
+                              ecPercent > 0
+                                  ? context.successGreen
+                                  : context.neutralBlack.withValues(alpha: 0.5),
                         ),
                       ),
                       if (!isSmallScreen)
@@ -730,7 +752,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                   ),
                 ),
 
-                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
+                SizedBox(
+                  width: isSmallScreen ? context.spacingS : context.spacingM,
+                ),
                 Icon(
                   IconlyLight.arrow_right_2,
                   color: context.neutralGray,
@@ -747,9 +771,11 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   Widget _buildSettingsTab() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    
+
     return SingleChildScrollView(
-      padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
+      padding: EdgeInsets.all(
+        isSmallScreen ? context.spacingM : context.spacingL,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -761,7 +787,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
               color: context.neutralBlack,
             ),
           ),
-          SizedBox(height: isSmallScreen ? context.spacingL : context.spacingXL),
+          SizedBox(
+            height: isSmallScreen ? context.spacingL : context.spacingXL,
+          ),
 
           // Points per percent
           _buildSettingCard(
@@ -783,11 +811,15 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
             onTap: () => _editMaxExtraCredit(),
           ),
 
-          SizedBox(height: isSmallScreen ? context.spacingXL : context.spacingXXL),
+          SizedBox(
+            height: isSmallScreen ? context.spacingXL : context.spacingXXL,
+          ),
 
           // Example calculation
           Container(
-            padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
+            padding: EdgeInsets.all(
+              isSmallScreen ? context.spacingM : context.spacingL,
+            ),
             decoration: BoxDecoration(
               color: context.infoBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(context.radiusL),
@@ -816,7 +848,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                     ),
                   ],
                 ),
-                SizedBox(height: isSmallScreen ? context.spacingS : context.spacingM),
+                SizedBox(
+                  height: isSmallScreen ? context.spacingS : context.spacingM,
+                ),
                 Text(
                   '25 pts ÷ $_pointsPerPercent = ${(25 / _pointsPerPercent).toStringAsFixed(2)}%',
                   style: TextStyle(
@@ -853,14 +887,12 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: context.neutralWhite,
         borderRadius: BorderRadius.circular(context.radiusL),
-        border: Border.all(
-          color: context.neutralGray.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: context.neutralGray.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -875,7 +907,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
           borderRadius: BorderRadius.circular(context.radiusL),
           onTap: onTap,
           child: Padding(
-            padding: EdgeInsets.all(isSmallScreen ? context.spacingM : context.spacingL),
+            padding: EdgeInsets.all(
+              isSmallScreen ? context.spacingM : context.spacingL,
+            ),
             child: Row(
               children: [
                 Container(
@@ -891,7 +925,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                     size: isSmallScreen ? 20 : 24,
                   ),
                 ),
-                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
+                SizedBox(
+                  width: isSmallScreen ? context.spacingS : context.spacingM,
+                ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -922,8 +958,10 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isSmallScreen ? context.spacingS : context.spacingM,
-                    vertical: isSmallScreen ? context.spacingXS : context.spacingS,
+                    horizontal:
+                        isSmallScreen ? context.spacingS : context.spacingM,
+                    vertical:
+                        isSmallScreen ? context.spacingXS : context.spacingS,
                   ),
                   decoration: BoxDecoration(
                     color: context.secondaryLight,
@@ -938,7 +976,9 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
                     ),
                   ),
                 ),
-                SizedBox(width: isSmallScreen ? context.spacingS : context.spacingM),
+                SizedBox(
+                  width: isSmallScreen ? context.spacingS : context.spacingM,
+                ),
                 Icon(
                   IconlyLight.arrow_right_2,
                   color: context.neutralGray,
@@ -953,77 +993,83 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
   }
 
   void _editPointsPerPercent() {
-    final controller = TextEditingController(text: _pointsPerPercent.toString());
-    
+    final controller = TextEditingController(
+      text: _pointsPerPercent.toString(),
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Points Per Percent'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Points needed for 1%',
-            hintText: 'e.g., 10',
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Points Per Percent'),
+            content: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Points needed for 1%',
+                hintText: 'e.g., 10',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final value = int.tryParse(controller.text);
+                  if (value != null && value > 0) {
+                    setState(() {
+                      _pointsPerPercent = value;
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final value = int.tryParse(controller.text);
-              if (value != null && value > 0) {
-                setState(() {
-                  _pointsPerPercent = value;
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
     );
   }
 
   void _editMaxExtraCredit() {
-    final controller = TextEditingController(text: _maxExtraCreditPercent.toString());
-    
+    final controller = TextEditingController(
+      text: _maxExtraCreditPercent.toString(),
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Maximum Extra Credit'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Max EC percentage',
-            hintText: 'e.g., 5.0',
-            suffixText: '%',
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Maximum Extra Credit'),
+            content: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Max EC percentage',
+                hintText: 'e.g., 5.0',
+                suffixText: '%',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final value = double.tryParse(controller.text);
+                  if (value != null && value > 0) {
+                    setState(() {
+                      _maxExtraCreditPercent = value;
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final value = double.tryParse(controller.text);
-              if (value != null && value > 0) {
-                setState(() {
-                  _maxExtraCreditPercent = value;
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1032,10 +1078,11 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _StudentDetailsSheet(
-        student: student,
-        courseCode: _selectedCourse!['courseCode'],
-      ),
+      builder:
+          (context) => _StudentDetailsSheet(
+            student: student,
+            courseCode: _selectedCourse!['courseCode'],
+          ),
     );
   }
 
@@ -1043,49 +1090,50 @@ class _ProfessorDashboardPageState extends State<ProfessorDashboardPage> with Si
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.all(context.spacingXL),
-        decoration: BoxDecoration(
-          color: context.neutralWhite,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(context.radiusXL),
-            topRight: Radius.circular(context.radiusXL),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Export Options',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: context.neutralBlack,
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(context.spacingXL),
+            decoration: BoxDecoration(
+              color: context.neutralWhite,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(context.radiusXL),
+                topRight: Radius.circular(context.radiusXL),
               ),
             ),
-            SizedBox(height: context.spacingL),
-            ListTile(
-              leading: Icon(IconlyBold.document, color: context.accentNavy),
-              title: const Text('Export to CSV'),
-              subtitle: const Text('Download student EC data'),
-              onTap: () {
-                Navigator.pop(context);
-                _exportToCSV();
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Export Options',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: context.neutralBlack,
+                  ),
+                ),
+                SizedBox(height: context.spacingL),
+                ListTile(
+                  leading: Icon(IconlyBold.document, color: context.accentNavy),
+                  title: const Text('Export to CSV'),
+                  subtitle: const Text('Download student EC data'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _exportToCSV();
+                  },
+                ),
+                ListTile(
+                  leading: Icon(IconlyBold.send, color: context.accentNavy),
+                  title: const Text('Email Report'),
+                  subtitle: const Text('Send EC report to your email'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _emailReport();
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: Icon(IconlyBold.send, color: context.accentNavy),
-              title: const Text('Email Report'),
-              subtitle: const Text('Send EC report to your email'),
-              onTap: () {
-                Navigator.pop(context);
-                _emailReport();
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -1115,10 +1163,7 @@ class _StudentDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> student;
   final String courseCode;
 
-  const _StudentDetailsSheet({
-    required this.student,
-    required this.courseCode,
-  });
+  const _StudentDetailsSheet({required this.student, required this.courseCode});
 
   @override
   Widget build(BuildContext context) {
@@ -1248,7 +1293,9 @@ class _StudentDetailsSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.spacingXL,
+                      ),
                       child: Text(
                         'Events Attended (${events.length})',
                         style: TextStyle(
@@ -1261,7 +1308,9 @@ class _StudentDetailsSheet extends StatelessWidget {
                     SizedBox(height: context.spacingM),
                     Expanded(
                       child: ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: context.spacingXL),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.spacingXL,
+                        ),
                         itemCount: events.length,
                         itemBuilder: (context, index) {
                           final event = events[index];
@@ -1319,11 +1368,12 @@ class _StudentDetailsSheet extends StatelessWidget {
 
   Future<List<Event>> _getStudentAttendedEvents(String studentId) async {
     try {
-      final eventsSnapshot = await FirebaseFirestore.instance
-          .collection('events')
-          .where('attendanceList', arrayContains: studentId)
-          .orderBy('eventDate', descending: true)
-          .get();
+      final eventsSnapshot =
+          await FirebaseFirestore.instance
+              .collection('events')
+              .where('attendanceList', arrayContains: studentId)
+              .orderBy('eventDate', descending: true)
+              .get();
 
       return eventsSnapshot.docs
           .map((doc) => Event.fromJson(doc.data(), doc.id))
@@ -1344,9 +1394,7 @@ class _StudentDetailsSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.secondaryLight,
         borderRadius: BorderRadius.circular(context.radiusM),
-        border: Border.all(
-          color: context.neutralGray.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: context.neutralGray.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
