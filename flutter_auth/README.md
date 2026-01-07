@@ -1,16 +1,57 @@
-# flutter_auth
+# CentrX Flutter Application
 
-A new Flutter project.
+This directory contains the main Flutter application code for CentrX.
 
-## Getting Started
+## Quick Start
 
-This project is a starting point for a Flutter application.
+```bash
+# Install dependencies
+flutter pub get
 
-A few resources to get you started if this is your first Flutter project:
+# Run on your preferred platform
+flutter run
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Requirements
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter SDK 3.0+
+- Dart 2.17+
+- Firebase configuration files (contact project owner)
+
+## Development
+
+### Running Tests
+```bash
+flutter test
+```
+
+### Code Analysis
+```bash
+flutter analyze
+```
+
+### Format Code
+```bash
+dart format .
+```
+
+## Project Documentation
+
+For comprehensive documentation including architecture, features, and setup instructions, see the [main README](../README.md) in the root directory.
+
+## Firebase Configuration
+
+This project requires Firebase configuration files that are **not included** in version control for security:
+
+- `lib/firebase_options.dart`
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist`
+- `macos/Runner/GoogleService-Info.plist`
+
+Contact the project owner to obtain these files.
+
+## Learn More
+
+- [Flutter Documentation](https://docs.flutter.dev/)
+- [Firebase for Flutter](https://firebase.google.com/docs/flutter/setup)
+- [Riverpod Documentation](https://riverpod.dev/)
