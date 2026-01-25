@@ -3,6 +3,7 @@ import 'package:flutter_auth/components/like_button.dart';
 import 'package:flutter_auth/components/rsvp_button.dart';
 import 'package:flutter_auth/components/comment_button.dart';
 import 'package:iconly/iconly.dart';
+import 'package:intl/intl.dart';
 
 class VideoOverlay extends StatelessWidget {
   final String title;
@@ -17,6 +18,9 @@ class VideoOverlay extends StatelessWidget {
   final Duration position;
   final Duration totalDuration;
   final ValueChanged<Duration> onSeek;
+  // Event date/time fields
+  final DateTime? eventDate;
+  final int? durationMinutes;
 
   const VideoOverlay({
     Key? key,
@@ -28,10 +32,36 @@ class VideoOverlay extends StatelessWidget {
     required this.likeCount,
     required this.isPlaying,
     required this.onPlayPauseTap,
-  required this.position,
-  required this.totalDuration,
-  required this.onSeek,
+    required this.position,
+    required this.totalDuration,
+    required this.onSeek,
+    this.eventDate,
+    this.durationMinutes,
   }) : super(key: key);
+
+  /// Formats the event date as "Sat, Jan 25"
+  String _formatDate(DateTime date) {
+    return DateFormat('EEE, MMM d').format(date);
+  }
+
+  /// Formats the event time as "7:00 PM"
+  String _formatTime(DateTime date) {
+    return DateFormat('h:mm a').format(date);
+  }
+
+  /// Formats duration in a human-readable way
+  String _formatDuration(int minutes) {
+    if (minutes < 60) {
+      return '$minutes min';
+    } else if (minutes % 60 == 0) {
+      final hours = minutes ~/ 60;
+      return hours == 1 ? '1 hour' : '$hours hours';
+    } else {
+      final hours = minutes ~/ 60;
+      final mins = minutes % 60;
+      return '${hours}h ${mins}m';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +159,87 @@ class VideoOverlay extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: height * 0.008),
+                // Event date/time row
+                if (eventDate != null)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: height * 0.006),
+                    child: Row(
+                      children: [
+                        Icon(
+                          IconlyBold.calendar,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          size: width * 0.035,
+                        ),
+                        SizedBox(width: width * 0.01),
+                        Text(
+                          _formatDate(eventDate!),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: width * 0.03,
+                            fontWeight: FontWeight.w600,
+                            shadows: [
+                              Shadow(
+                                offset: const Offset(0, 1),
+                                blurRadius: 2,
+                                color: Colors.black.withValues(alpha: 0.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: width * 0.025),
+                        Icon(
+                          IconlyBold.time_circle,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          size: width * 0.035,
+                        ),
+                        SizedBox(width: width * 0.01),
+                        Text(
+                          _formatTime(eventDate!),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: width * 0.03,
+                            fontWeight: FontWeight.w600,
+                            shadows: [
+                              Shadow(
+                                offset: const Offset(0, 1),
+                                blurRadius: 2,
+                                color: Colors.black.withValues(alpha: 0.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (durationMinutes != null && durationMinutes! > 0) ...[
+                          SizedBox(width: width * 0.02),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: width * 0.015,
+                              vertical: height * 0.003,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(width * 0.01),
+                            ),
+                            child: Text(
+                              _formatDuration(durationMinutes!),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontSize: width * 0.025,
+                                fontWeight: FontWeight.w500,
+                                shadows: [
+                                  Shadow(
+                                    offset: const Offset(0, 1),
+                                    blurRadius: 2,
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                // Location row
                 Row(
                   children: [
                     Icon(

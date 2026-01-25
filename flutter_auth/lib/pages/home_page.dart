@@ -20,6 +20,10 @@ class _HomePageState extends State<HomePage> {
   final User? user = FirebaseAuth.instance.currentUser;
   late final String userFirstName;
 
+  // Key to force rebuild of child widgets on refresh
+  Key _refreshKey = UniqueKey();
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +31,34 @@ class _HomePageState extends State<HomePage> {
     userFirstName = fullName.isNotEmpty
         ? fullName.split(' ').first
         : 'there';
+  }
+
+  /// Handles pull-to-refresh by reloading user data and triggering widget rebuilds
+  Future<void> _onRefresh() async {
+    if (_isRefreshing) return;
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      // Add a small delay to ensure smooth animation
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Force rebuild of child widgets (CalendarWidget, ClassEnrollmentWidget)
+      // by changing the key, which recreates them and re-fetches data
+      if (mounted) {
+        setState(() {
+          _refreshKey = UniqueKey();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
   }
 
   @override

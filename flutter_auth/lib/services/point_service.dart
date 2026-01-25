@@ -1,15 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/partnership.dart';
+import '../models/check_in_result.dart';
 
 /// Service for awarding points and managing extra credit
 class PointService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Award points to a student from a partnership event attendance
-  /// 
+  ///
   /// This is called automatically when a student scans QR at an event
   /// that's part of an active partnership with auto-approve enabled.
-  static Future<void> awardPartnershipPoints({
+  ///
+  /// Returns a [PointAward] with details about points awarded, or null
+  /// if points were already awarded for this event.
+  static Future<PointAward?> awardPartnershipPoints({
     required String studentId,
     required String eventId,
     required String partnershipId,
@@ -52,8 +56,15 @@ class PointService {
     );
 
     if (alreadyAttended) {
-      // Already got points for this event, skip
-      return;
+      // Already got points for this event, return indicator
+      return PointAward(
+        points: 0,
+        courseCode: course.courseCode,
+        courseName: course.courseName,
+        courseId: course.courseId,
+        eventNumber: eventNumber,
+        alreadyAwarded: true,
+      );
     }
 
     attendedEvents.add({
@@ -110,6 +121,16 @@ class PointService {
     });
 
     await batch.commit();
+
+    // Return the point award information
+    return PointAward(
+      points: course.pointsPerEvent,
+      courseCode: course.courseCode,
+      courseName: course.courseName,
+      courseId: course.courseId,
+      eventNumber: eventNumber,
+      alreadyAwarded: false,
+    );
   }
 
   /// Get student's points for a specific course

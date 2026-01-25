@@ -28,10 +28,13 @@ class _RsvpDetailsPageState extends State<RsvpDetailsPage>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  late bool _isRsvped;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _isRsvped = widget.isRsvped;
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -207,45 +210,181 @@ class _RsvpDetailsPageState extends State<RsvpDetailsPage>
                               context.spacingXL,
                               context.spacingXL,
                             ),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: widget.isRsvped
-                                    ? null
-                                    : () async {
-                                        await RsvpService.rsvpToEvent(
-                                          clubId: widget.clubId,
-                                          eventId: widget.eventId,
-                                        );
-                                        if (context.mounted) {
-                                          Navigator.of(context).pop();
-                                        }
-                                      },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: widget.isRsvped
-                                      ? context.neutralGray.withValues(alpha: 0.2)
-                                      : context.accentNavy,
-                                  foregroundColor: widget.isRsvped
-                                      ? context.neutralBlack.withValues(alpha: 0.5)
-                                      : Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: context.spacingL + 2,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: _isRsvped || _isLoading
+                                        ? null
+                                        : () async {
+                                            setState(() => _isLoading = true);
+                                            try {
+                                              await RsvpService.rsvpToEvent(
+                                                clubId: widget.clubId,
+                                                eventId: widget.eventId,
+                                              );
+                                              if (context.mounted) {
+                                                setState(() {
+                                                  _isRsvped = true;
+                                                  _isLoading = false;
+                                                });
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Row(
+                                                      children: [
+                                                        Icon(
+                                                          IconlyBold.tick_square,
+                                                          color: Colors.white,
+                                                          size: 20,
+                                                        ),
+                                                        SizedBox(width: 12),
+                                                        Text('Successfully RSVPed!'),
+                                                      ],
+                                                    ),
+                                                    backgroundColor: Colors.green.shade600,
+                                                    behavior: SnackBarBehavior.floating,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    duration: Duration(seconds: 2),
+                                                  ),
+                                                );
+                                              }
+                                            } catch (e) {
+                                              if (context.mounted) {
+                                                setState(() => _isLoading = false);
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Row(
+                                                      children: [
+                                                        Icon(
+                                                          IconlyBold.close_square,
+                                                          color: Colors.white,
+                                                          size: 20,
+                                                        ),
+                                                        SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'Failed to RSVP. Please try again.',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    backgroundColor: Colors.red.shade600,
+                                                    behavior: SnackBarBehavior.floating,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    duration: Duration(seconds: 3),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _isRsvped
+                                          ? context.neutralGray.withValues(alpha: 0.2)
+                                          : context.accentNavy,
+                                      foregroundColor: _isRsvped
+                                          ? context.neutralBlack.withValues(alpha: 0.5)
+                                          : Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: context.spacingL + 2,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(context.radiusM),
+                                      ),
+                                      elevation: _isRsvped ? 0 : 2,
+                                      shadowColor: context.accentNavy.withValues(alpha: 0.3),
+                                    ),
+                                    child: _isLoading && !_isRsvped
+                                        ? SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                            ),
+                                          )
+                                        : Text(
+                                            _isRsvped ? 'Already RSVPed' : 'RSVP',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(context.radiusM),
-                                  ),
-                                  elevation: widget.isRsvped ? 0 : 2,
-                                  shadowColor: context.accentNavy.withValues(alpha: 0.3),
                                 ),
-                                child: Text(
-                                  widget.isRsvped ? 'Already RSVPed' : 'RSVP',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
+                                // Cancel RSVP Button - Only shown when already RSVP'd
+                                if (_isRsvped) ...[
+                                  SizedBox(height: context.spacingM),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton(
+                                      onPressed: _isLoading
+                                          ? null
+                                          : () async {
+                                              setState(() => _isLoading = true);
+                                              try {
+                                                await RsvpService.cancelRsvp(
+                                                  clubId: widget.clubId,
+                                                  eventId: widget.eventId,
+                                                );
+                                                if (context.mounted) {
+                                                  Navigator.of(context).pop(true);
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  setState(() => _isLoading = false);
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text('Failed to cancel RSVP'),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.red.shade600,
+                                        side: BorderSide(
+                                          color: Colors.red.shade300,
+                                          width: 1.5,
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: context.spacingL,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(context.radiusM),
+                                        ),
+                                      ),
+                                      child: _isLoading
+                                          ? SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation<Color>(
+                                                  Colors.red.shade600,
+                                                ),
+                                              ),
+                                            )
+                                          : Text(
+                                              'Cancel RSVP',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                    ),
                                   ),
-                                ),
-                              ),
+                                ],
+                              ],
                             ),
                           ),
                         ],

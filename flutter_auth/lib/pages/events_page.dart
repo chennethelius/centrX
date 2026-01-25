@@ -3,9 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
 import '../components/video_overlay.dart';
 import '../services/video_cache_service.dart';
+import '../theme/app_theme.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+
+/// Filter options for date-based filtering
+enum DateFilter { all, today, thisWeek, upcoming }
 
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
@@ -18,6 +22,12 @@ class _EventsPageState extends State<EventsPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late final PageController _pageController;
   late final StreamSubscription<QuerySnapshot> _eventSub;
+
+  // Search and filter state
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  DateFilter _selectedDateFilter = DateFilter.all;
+  bool _isSearchExpanded = false;
   
   /// Safely checks if a video controller is still usable
   bool _isControllerValid(VideoPlayerController? controller) {
@@ -46,6 +56,10 @@ class _EventsPageState extends State<EventsPage> {
   // We keep only the URLs and fetch controllers from the pool.
   List<String> _videoUrls = [];
   int _currentIndex = 0;
+
+  // Filtered lists (after applying search and filters)
+  List<QueryDocumentSnapshot> _filteredDocs = [];
+  List<String> _filteredUrls = [];
 
   @override
   void initState() {
@@ -129,12 +143,134 @@ class _EventsPageState extends State<EventsPage> {
     if (kDebugMode) {
       debugPrint('EventsPage disposing - immediately pausing all videos');
     }
-    
+
     // Immediately pause all videos when leaving the page
     VideoControllerPool.instance.pauseAll();
-    _eventSub.cancel(); 
+    _eventSub.cancel();
     _pageController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  /// Apply search query and date filter to the media docs
+  void _applyFilters() {
+    final query = _searchQuery.toLowerCase().trim();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final endOfWeek = today.add(const Duration(days: 7));
+
+    _filteredDocs = _mediaDocs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+
+      // Search filter - check title, description, location, and clubname
+      if (query.isNotEmpty) {
+        final title = (data['title'] as String? ?? '').toLowerCase();
+        final description = (data['description'] as String? ?? '').toLowerCase();
+        final location = (data['location'] as String? ?? '').toLowerCase();
+        final clubname = (data['clubname'] as String? ?? '').toLowerCase();
+
+        final matchesSearch = title.contains(query) ||
+            description.contains(query) ||
+            location.contains(query) ||
+            clubname.contains(query);
+
+        if (!matchesSearch) return false;
+      }
+
+      // Date filter
+      if (_selectedDateFilter != DateFilter.all) {
+        final eventDateTimestamp = data['eventDate'];
+        if (eventDateTimestamp == null) return false;
+
+        final eventDate = (eventDateTimestamp as Timestamp).toDate();
+        final eventDay = DateTime(eventDate.year, eventDate.month, eventDate.day);
+
+        switch (_selectedDateFilter) {
+          case DateFilter.today:
+            if (eventDay != today) return false;
+            break;
+          case DateFilter.thisWeek:
+            if (eventDay.isBefore(today) || eventDay.isAfter(endOfWeek)) return false;
+            break;
+          case DateFilter.upcoming:
+            if (eventDay.isBefore(today)) return false;
+            break;
+          case DateFilter.all:
+            break;
+        }
+      }
+
+      return true;
+    }).toList();
+
+    // Build filtered URLs from filtered docs
+    _filteredUrls = _filteredDocs
+        .map((doc) => (doc.data() as Map<String, dynamic>)['mediaUrl'] as String?)
+        .whereType<String>()
+        .toList();
+
+    // Reset to first page when filters change
+    if (_pageController.hasClients && _filteredUrls.isNotEmpty) {
+      _pageController.jumpToPage(0);
+    }
+    _currentIndex = 0;
+
+    // Start playing first video if available
+    if (_filteredUrls.isNotEmpty) {
+      final firstUrl = _filteredUrls.first;
+      VideoControllerPool.instance.lastIndex = 0;
+      VideoControllerPool.instance.lastUrl = firstUrl;
+      VideoControllerPool.instance.makeSticky(firstUrl);
+      VideoControllerPool.instance.getController(firstUrl).then((c) {
+        if (!mounted) return;
+        c.pause();
+        c.seekTo(Duration.zero);
+        c.play();
+        VideoControllerPool.instance.pauseAllExcept(firstUrl);
+      });
+    }
+  }
+
+  /// Handle search text changes
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+      _applyFilters();
+    });
+  }
+
+  /// Handle date filter changes
+  void _onDateFilterChanged(DateFilter filter) {
+    setState(() {
+      _selectedDateFilter = filter;
+      _applyFilters();
+    });
+  }
+
+  /// Toggle search bar expansion
+  void _toggleSearch() {
+    setState(() {
+      _isSearchExpanded = !_isSearchExpanded;
+      if (!_isSearchExpanded) {
+        _searchController.clear();
+        _searchQuery = '';
+        _applyFilters();
+      }
+    });
+  }
+
+  /// Get label for date filter
+  String _getDateFilterLabel(DateFilter filter) {
+    switch (filter) {
+      case DateFilter.all:
+        return 'All';
+      case DateFilter.today:
+        return 'Today';
+      case DateFilter.thisWeek:
+        return 'This Week';
+      case DateFilter.upcoming:
+        return 'Upcoming';
+    }
   }
 
   @override
@@ -192,6 +328,12 @@ class _EventsPageState extends State<EventsPage> {
           final likeCount = data['likeCount']    as int? ?? 0;
           final clubId = data['ownerId'] as String? ?? '';
           final eventId = data['eventId'] as String? ?? '';
+          // Extract event date and duration
+          final eventDateTimestamp = data['eventDate'];
+          final DateTime? eventDate = eventDateTimestamp != null
+              ? (eventDateTimestamp as Timestamp).toDate()
+              : null;
+          final int? durationMinutes = data['durationMinutes'] as int?;
 
           /*
           final attendance = List<String>.from(data['attendanceList'] as List<dynamic>? ?? []);
@@ -262,6 +404,8 @@ class _EventsPageState extends State<EventsPage> {
                                       controller.seekTo(to);
                                     });
                                   },
+                                  eventDate: eventDate,
+                                  durationMinutes: durationMinutes,
                                 ),
                               ],
                             );

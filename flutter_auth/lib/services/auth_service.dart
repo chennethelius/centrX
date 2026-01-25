@@ -258,10 +258,11 @@ Future<User?> signInClubWithEmail({
       final snap = await clubRef.get();
       if (!snap.exists) {
         // Create with minimal defaults
+        // NOTE: Password is NOT stored here - Firebase Auth handles password
+        // storage and verification securely. Never store passwords in Firestore.
         await clubRef.set({
           'uid':       user.uid,
           'email':     email,
-          'password': password, // Note: Consider removing password from Firestore for security
           'club_name': '',
           'createdAt': FieldValue.serverTimestamp(),
           'members_count': 0,
